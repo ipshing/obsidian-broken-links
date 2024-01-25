@@ -1,0 +1,32 @@
+{
+    "name": "broken-links",
+    "version": "1.0.0",
+    "description": "Find internal links that don't connect to notes.",
+    "main": "main.js",
+    "scripts": {
+        "dev": "rollup --config rollup.config.js -w",
+        "build": "rollup --config rollup.config.js --environment BUILD:production",
+        "version": "node version-bump.mjs && git add manifest.json versions.json"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "MIT",
+    "devDependencies": {
+        "@rollup/plugin-commonjs": "^21.0.1",
+        "@rollup/plugin-json": "^4.1.0",
+        "@rollup/plugin-node-resolve": "^13.1.3",
+        "@rollup/plugin-typescript": "^8.3.0",
+        "@tsconfig/svelte": "^5.0.2",
+        "@types/node": "^16.11.6",
+        "@typescript-eslint/eslint-plugin": "5.29.0",
+        "@typescript-eslint/parser": "5.29.0",
+        "builtin-modules": "3.3.0",
+        "obsidian": "latest",
+        "rollup": "^2.67.0",
+        "rollup-plugin-copy": "^3.4.0",
+        "svelte": "^4.2.9",
+        "svelte-preprocess": "^5.1.3",
+        "tslib": "2.4.0",
+        "typescript": "4.7.4"
+    }
+}
