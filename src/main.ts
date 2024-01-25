@@ -1,5 +1,6 @@
-import { Plugin } from "obsidian";
+import { Plugin, WorkspaceLeaf } from "obsidian";
 import { BrokenLinksSettingsTab } from "./settings";
+import { BROKEN_LINKS_VIEW_TYPE, BrokenLinksView } from "./broken-links-view";
 
 interface BrokenLinksSettings {
     showRibbonIcon: boolean;
@@ -15,14 +16,20 @@ export default class BrokenLinks extends Plugin {
     async onload() {
         await this.loadSettings();
 
+        this.registerView(BROKEN_LINKS_VIEW_TYPE, (leaf) => new BrokenLinksView(leaf, this));
+
         if (this.settings.showRibbonIcon) {
-            this.addRibbonIcon("unlink", "Open Broken Links list", () => {});
+            this.addRibbonIcon("unlink", "Open Broken Links list", () => {
+                this.activateView();
+            });
         }
 
         this.addCommand({
             id: "list",
             name: "Open Broken Links list",
-            callback: () => {},
+            callback: () => {
+                this.activateView();
+            },
         });
 
         this.addSettingTab(new BrokenLinksSettingsTab(this.app, this));
@@ -40,5 +47,24 @@ export default class BrokenLinks extends Plugin {
 
     async saveSettings() {
         await this.saveData(this.settings);
+    }
+
+    async activateView() {
+        const { workspace } = this.app;
+
+        let leaf: WorkspaceLeaf | null = null;
+        const leaves = workspace.getLeavesOfType(BROKEN_LINKS_VIEW_TYPE);
+        if (leaves.length > 0) {
+            // A leaf with the Broken Links view already exists, use that
+            leaf = leaves[0];
+        } else {
+            // The view could not be found in the workspace,
+            // create a new leaf in the right sidebar
+            leaf = workspace.getRightLeaf(false);
+            await leaf.setViewState({ type: BROKEN_LINKS_VIEW_TYPE, active: true });
+        }
+
+        // Show the leaf in case it is in a collapsed sidebar
+        workspace.revealLeaf(leaf);
     }
 }
