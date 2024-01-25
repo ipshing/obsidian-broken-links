@@ -1,14 +1,31 @@
 import { Plugin } from "obsidian";
+import { BrokenLinksSettingsTab } from "./settings";
 
-interface BrokenLinksSettings {}
+interface BrokenLinksSettings {
+    showRibbonIcon: boolean;
+}
 
-const DEFAULT_SETTINGS: BrokenLinksSettings = {};
+const DEFAULT_SETTINGS: BrokenLinksSettings = {
+    showRibbonIcon: true,
+};
 
 export default class BrokenLinks extends Plugin {
     settings: BrokenLinksSettings;
 
     async onload() {
         await this.loadSettings();
+
+        if (this.settings.showRibbonIcon) {
+            this.addRibbonIcon("unlink", "Open Broken Links list", () => {});
+        }
+
+        this.addCommand({
+            id: "list",
+            name: "Open Broken Links list",
+            callback: () => {},
+        });
+
+        this.addSettingTab(new BrokenLinksSettingsTab(this.app, this));
 
         console.log("Broken Links plugin loaded");
     }
