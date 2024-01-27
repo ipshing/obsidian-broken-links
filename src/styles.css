@@ -1,0 +1,20 @@
+div[data-type="broken-links-view"] .hidden {
+    display: none;
+}
+div[data-type="broken-links-view"] > .nav-files-container {
+    padding: 0 var(--size-4-3) var(--size-4-9) var(--size-4-3);
+}
+div[data-type="broken-links-view"] .nav-folder.mod-root > .nav-folder-title {
+    font-size: var(--font-ui-medium);
+}
+div[data-type="broken-links-view"] .nav-folder-children .nav-folder-title > .nav-folder-title-content {
+    flex-grow: 1;
+}
+div[data-type="broken-links-view"] .nav-file .nav-file-title > .nav-file-title-content {
+    font-style: oblique;
+}
+div[data-type="broken-links-view"] .nav-link-title,
+div[data-type="broken-links-view"] .nav-link-title.is-clickable:hover,
+div[data-type="broken-links-view"] .nav-link-title .tree-item-icon {
+    color: var(--link-color);
+}
