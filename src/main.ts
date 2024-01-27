@@ -37,7 +37,8 @@ export default class BrokenLinks extends Plugin {
         console.log("Broken Links plugin loaded");
     }
 
-    onunload() {
+    async onunload() {
+        await this.deactivateView();
         console.log("Broken Links plugin unloaded");
     }
 
@@ -66,5 +67,12 @@ export default class BrokenLinks extends Plugin {
 
         // Show the leaf in case it is in a collapsed sidebar
         workspace.revealLeaf(leaf);
+    }
+
+    async deactivateView() {
+        const { workspace } = this.app;
+
+        // Locate all leaves and detach them
+        workspace.getLeavesOfType(BROKEN_LINKS_VIEW_TYPE).forEach((leaf) => leaf.detach());
     }
 }
