@@ -19,7 +19,7 @@ export interface LinkModel {
     id: string;
     parent: FileModel;
     path: string;
-    posotion: Pos;
+    position: Pos;
 }
 
 export interface LinkPosition {

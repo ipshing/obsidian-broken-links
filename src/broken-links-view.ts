@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, getLinkpath } from "obsidian";
+import { ItemView, Keymap, TFile, WorkspaceLeaf, getLinkpath } from "obsidian";
 import BrokenLinks from "./main";
 import { FolderModel, FileModel, LinkModel, LinkPosition } from "./models";
 import FileListView from "./views/file-list.svelte";
@@ -12,6 +12,8 @@ export class BrokenLinksView extends ItemView {
     constructor(leaf: WorkspaceLeaf, plugin: BrokenLinks) {
         super(leaf);
         this.plugin = plugin;
+        // Bind this to link click handler
+        this.linkClickedHandler = this.linkClickedHandler.bind(this);
     }
 
     getViewType(): string {
@@ -124,7 +126,7 @@ export class BrokenLinksView extends ItemView {
                                 id: link.link,
                                 parent: fileModel,
                                 path: file.path,
-                                posotion: link.position,
+                                position: link.position,
                             });
                         }
                     }
@@ -138,7 +140,16 @@ export class BrokenLinksView extends ItemView {
             props: {
                 folders: folders,
                 files: files,
+                linkClicked: this.linkClickedHandler,
             },
         });
+    }
+
+    async linkClickedHandler(e: MouseEvent, link: LinkModel) {
+        const file = this.app.vault.getAbstractFileByPath(link.path);
+        if (file instanceof TFile) {
+            const leaf: WorkspaceLeaf = this.app.workspace.getLeaf(Keymap.isModEvent(e));
+            await leaf.openFile(file);
+        }
     }
 }

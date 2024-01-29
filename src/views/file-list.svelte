@@ -1,6 +1,6 @@
 <script lang="ts">
     import { setIcon } from "obsidian";
-    import { FileModel, FolderModel } from "src/models";
+    import { FileModel, FolderModel, LinkModel } from "src/models";
     import { afterUpdate } from "svelte";
     import Folder from "./tree-item-folder.svelte";
     import File from "./tree-item-file.svelte";
@@ -8,6 +8,8 @@
 
     export let folders: Map<string, FolderModel>;
     export let files: Map<string, FileModel>;
+    export let linkClicked: (e: MouseEvent, link: LinkModel) => void;
+
     let container: HTMLElement;
 
     afterUpdate(() => {
@@ -25,10 +27,10 @@
         </div>
         <div class="tree-item-children nav-folder-children">
             {#each getSortedKeys(folders) as key}
-                <Folder folder={getFolder(key, folders)} />
+                <Folder folder={getFolder(key, folders)} {linkClicked} />
             {/each}
             {#each getSortedKeys(files) as key}
-                <File file={getFile(key, files)} />
+                <File file={getFile(key, files)} {linkClicked} />
             {/each}
         </div>
     </div>

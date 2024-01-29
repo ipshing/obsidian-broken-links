@@ -19,9 +19,6 @@ div[data-type="broken-links-view"] .nav-folder-children .nav-folder-title > .tre
 div[data-type="broken-links-view"] .nav-folder-children .nav-folder-title > .nav-folder-title-content {
     flex-grow: 1;
 }
-div[data-type="broken-links-view"] .nav-file .nav-file-title > .nav-file-title-content {
-    font-style: oblique;
-}
 div[data-type="broken-links-view"] .nav-link-title,
 div[data-type="broken-links-view"] .nav-link-title.is-clickable:hover,
 div[data-type="broken-links-view"] .nav-link-title .tree-item-icon {

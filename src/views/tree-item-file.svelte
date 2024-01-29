@@ -1,9 +1,11 @@
 <script lang="ts">
-    import { FileModel } from "src/models";
+    import { FileModel, LinkModel } from "src/models";
     import { getLink, getSortedLinkKeys } from "src/utils";
     import Link from "./tree-item-link.svelte";
 
     export let file: FileModel;
+    export let linkClicked: (e: MouseEvent, link: LinkModel) => void;
+
     let isCollapsed: boolean = true;
 </script>
 
@@ -18,7 +20,7 @@
     </div>
     <div class="tree-item-children nav-file-children" class:hidden={isCollapsed}>
         {#each getSortedLinkKeys(file.links) as key}
-            <Link link={getLink(key, file.links)} />
+            <Link link={getLink(key, file.links)} {linkClicked} />
         {/each}
     </div>
 </div>

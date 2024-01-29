@@ -1,10 +1,12 @@
 <script lang="ts">
-    import { FolderModel } from "src/models";
+    import { FolderModel, LinkModel } from "src/models";
     import { getFile, getFolder, getSortedKeys } from "src/utils";
     import Folder from "./tree-item-folder.svelte";
     import File from "./tree-item-file.svelte";
 
     export let folder: FolderModel;
+    export let linkClicked: (e: MouseEvent, link: LinkModel) => void;
+
     let isCollapsed: boolean = true;
 </script>
 
@@ -19,10 +21,10 @@
     </div>
     <div class="tree-item-children nav-folder-children" class:hidden={isCollapsed}>
         {#each getSortedKeys(folder.folders) as key}
-            <Folder folder={getFolder(key, folder.folders)} />
+            <Folder folder={getFolder(key, folder.folders)} {linkClicked} />
         {/each}
         {#each getSortedKeys(folder.files) as key}
-            <File file={getFile(key, folder.files)} />
+            <File file={getFile(key, folder.files)} {linkClicked} />
         {/each}
     </div>
 </div>
