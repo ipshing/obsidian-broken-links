@@ -1,4 +1,4 @@
-import { ItemView, Keymap, TFile, WorkspaceLeaf, getLinkpath } from "obsidian";
+import { ItemView, Keymap, MarkdownPreviewView, MarkdownView, TFile, WorkspaceLeaf, getLinkpath } from "obsidian";
 import BrokenLinks from "./main";
 import { FolderModel, FileModel, LinkModel, LinkPosition } from "./models";
 import FileListView from "./views/file-list.svelte";
@@ -150,6 +150,36 @@ export class BrokenLinksView extends ItemView {
         if (file instanceof TFile) {
             const leaf: WorkspaceLeaf = this.app.workspace.getLeaf(Keymap.isModEvent(e));
             await leaf.openFile(file);
+            // Scroll to section and highlight
+            if (leaf.view instanceof MarkdownView) {
+                if (leaf.view.currentMode instanceof MarkdownPreviewView) {
+                    const renderer = leaf.view.currentMode.renderer;
+                    renderer.onRendered(() => {
+                        renderer.applyScroll(link.position.start.line, {
+                            center: true,
+                            highlight: true,
+                        });
+                    });
+                } else {
+                    leaf.view.editor.scrollIntoView(
+                        {
+                            from: { line: link.position.start.line, ch: link.position.start.col },
+                            to: { line: link.position.end.line, ch: link.position.end.col },
+                        },
+                        true
+                    );
+                    leaf.view.editor.setSelection(
+                        {
+                            line: link.position.start.line,
+                            ch: link.position.start.col,
+                        },
+                        {
+                            line: link.position.end.line,
+                            ch: link.position.end.col,
+                        }
+                    );
+                }
+            }
         }
     }
 }
