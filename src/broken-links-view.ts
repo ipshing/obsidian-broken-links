@@ -12,7 +12,8 @@ export class BrokenLinksView extends ItemView {
     constructor(leaf: WorkspaceLeaf, plugin: BrokenLinks) {
         super(leaf);
         this.plugin = plugin;
-        // Bind this to link click handler
+        // Bind "this" to methods for callbacks
+        this.updateView = this.updateView.bind(this);
         this.linkClickedHandler = this.linkClickedHandler.bind(this);
     }
 
@@ -27,14 +28,45 @@ export class BrokenLinksView extends ItemView {
     }
 
     async onOpen() {
-        this.draw();
+        console.time("Broken Links onOpen");
+
+        const list = this.getLinks();
+
+        this.containerEl.empty();
+        this.fileList = new FileListView({
+            target: this.containerEl,
+            props: {
+                folders: list.folders,
+                files: list.files,
+                linkClicked: this.linkClickedHandler,
+            },
+        });
+
+        // Handles file contents being updated
+        this.registerEvent(this.app.metadataCache.on("changed", this.updateView));
+        // Handles new files being created/deleted
+        this.registerEvent(this.app.metadataCache.on("resolved", this.updateView));
+
+        console.timeEnd("Broken Links onOpen");
     }
 
     async onClose() {
         this.fileList.$destroy();
     }
 
-    draw() {
+    async updateView() {
+        console.time("Broken Links updateView");
+
+        const list = this.getLinks();
+        this.fileList.$set({
+            folders: list.folders,
+            files: list.files,
+        });
+
+        console.timeEnd("Broken Links updateView");
+    }
+
+    getLinks(): { folders: Map<string, FolderModel>; files: Map<string, FileModel> } {
         // Set up models for the root
         const folders = new Map<string, FolderModel>();
         const files = new Map<string, FileModel>();
@@ -134,15 +166,7 @@ export class BrokenLinksView extends ItemView {
             }
         }
 
-        this.containerEl.empty();
-        this.fileList = new FileListView({
-            target: this.containerEl,
-            props: {
-                folders: folders,
-                files: files,
-                linkClicked: this.linkClickedHandler,
-            },
-        });
+        return { folders: folders, files: files };
     }
 
     async linkClickedHandler(e: MouseEvent, link: LinkModel) {
