@@ -170,38 +170,40 @@ export class BrokenLinksView extends ItemView {
     }
 
     async linkClickedHandler(e: MouseEvent, link: LinkModel) {
-        const file = this.app.vault.getAbstractFileByPath(link.path);
-        if (file instanceof TFile) {
-            const leaf: WorkspaceLeaf = this.app.workspace.getLeaf(Keymap.isModEvent(e));
-            await leaf.openFile(file);
-            // Scroll to section and highlight
-            if (leaf.view instanceof MarkdownView) {
-                if (leaf.view.currentMode instanceof MarkdownPreviewView) {
-                    const renderer = leaf.view.currentMode.renderer;
-                    renderer.onRendered(() => {
-                        renderer.applyScroll(link.position.start.line, {
-                            center: true,
-                            highlight: true,
+        if (!((e.instanceOf(MouseEvent) && e.button !== 0 && e.button !== 1) || e.defaultPrevented)) {
+            const file = this.app.vault.getAbstractFileByPath(link.path);
+            if (file instanceof TFile) {
+                const leaf: WorkspaceLeaf = this.app.workspace.getLeaf(Keymap.isModEvent(e));
+                await leaf.openFile(file);
+                // Scroll to section and highlight
+                if (leaf.view instanceof MarkdownView) {
+                    if (leaf.view.currentMode instanceof MarkdownPreviewView) {
+                        const renderer = leaf.view.currentMode.renderer;
+                        renderer.onRendered(() => {
+                            renderer.applyScroll(link.position.start.line, {
+                                center: true,
+                                highlight: true,
+                            });
                         });
-                    });
-                } else {
-                    leaf.view.editor.scrollIntoView(
-                        {
-                            from: { line: link.position.start.line, ch: link.position.start.col },
-                            to: { line: link.position.end.line, ch: link.position.end.col },
-                        },
-                        true
-                    );
-                    leaf.view.editor.setSelection(
-                        {
-                            line: link.position.start.line,
-                            ch: link.position.start.col,
-                        },
-                        {
-                            line: link.position.end.line,
-                            ch: link.position.end.col,
-                        }
-                    );
+                    } else {
+                        leaf.view.editor.scrollIntoView(
+                            {
+                                from: { line: link.position.start.line, ch: link.position.start.col },
+                                to: { line: link.position.end.line, ch: link.position.end.col },
+                            },
+                            true
+                        );
+                        leaf.view.editor.setSelection(
+                            {
+                                line: link.position.start.line,
+                                ch: link.position.start.col,
+                            },
+                            {
+                                line: link.position.end.line,
+                                ch: link.position.end.col,
+                            }
+                        );
+                    }
                 }
             }
         }
