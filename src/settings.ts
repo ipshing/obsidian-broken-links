@@ -30,5 +30,23 @@ export class BrokenLinksSettingsTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 });
             });
+
+        new Setting(containerEl)
+            .setName("Deep scan")
+            .setDesc(
+                "For links to heading/blocks, check not just if the file exists, but also if the heading/block exists. This can have a significant impact on performance depending on the size/contents of your vault. Changing this setting will force a refresh of the Broken Links panel."
+            )
+            .addToggle((toggle) => {
+                // Set the value from the plugin settings
+                toggle.setValue(this.plugin.settings.deepScan);
+                // Set up onChange handler
+                toggle.onChange(async (value) => {
+                    // Update settings with new value
+                    this.plugin.settings.deepScan = value;
+                    // Save settings
+                    await this.plugin.saveSettings();
+                    await this.plugin.updateView();
+                });
+            });
     }
 }

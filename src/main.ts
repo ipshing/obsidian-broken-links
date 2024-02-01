@@ -4,10 +4,12 @@ import { BROKEN_LINKS_VIEW_TYPE, BrokenLinksView } from "./broken-links-view";
 
 interface BrokenLinksSettings {
     showRibbonIcon: boolean;
+    deepScan: boolean;
 }
 
 const DEFAULT_SETTINGS: BrokenLinksSettings = {
     showRibbonIcon: true,
+    deepScan: false,
 };
 
 export default class BrokenLinks extends Plugin {
@@ -74,5 +76,13 @@ export default class BrokenLinks extends Plugin {
 
         // Locate all leaves and detach them
         workspace.getLeavesOfType(BROKEN_LINKS_VIEW_TYPE).forEach((leaf) => leaf.detach());
+    }
+
+    async updateView() {
+        this.app.workspace.getLeavesOfType(BROKEN_LINKS_VIEW_TYPE).forEach(async (leaf) => {
+            if (leaf.view instanceof BrokenLinksView) {
+                await leaf.view.updateView();
+            }
+        });
     }
 }

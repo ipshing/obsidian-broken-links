@@ -30,7 +30,7 @@ export class BrokenLinksView extends ItemView {
     async onOpen() {
         console.time("Broken Links onOpen");
 
-        const list = this.getLinks();
+        const list = await this.getLinks(this.plugin.settings.deepScan);
 
         this.containerEl.empty();
         this.fileList = new FileListView({
@@ -42,9 +42,7 @@ export class BrokenLinksView extends ItemView {
             },
         });
 
-        // Handles file contents being updated
-        this.registerEvent(this.app.metadataCache.on("changed", this.updateView));
-        // Handles new files being created/deleted
+        // Add callback to update the view when files get changed
         this.registerEvent(this.app.metadataCache.on("resolved", this.updateView));
 
         console.timeEnd("Broken Links onOpen");
@@ -57,7 +55,7 @@ export class BrokenLinksView extends ItemView {
     async updateView() {
         console.time("Broken Links updateView");
 
-        const list = this.getLinks();
+        const list = await this.getLinks(this.plugin.settings.deepScan);
         this.fileList.$set({
             folders: list.folders,
             files: list.files,
@@ -66,7 +64,7 @@ export class BrokenLinksView extends ItemView {
         console.timeEnd("Broken Links updateView");
     }
 
-    getLinks(): { folders: Map<string, FolderModel>; files: Map<string, FileModel> } {
+    async getLinks(deepScan = false): Promise<{ folders: Map<string, FolderModel>; files: Map<string, FileModel> }> {
         // Set up models for the root
         const folders = new Map<string, FolderModel>();
         const files = new Map<string, FileModel>();
@@ -84,10 +82,30 @@ export class BrokenLinksView extends ItemView {
                     links: new Map<LinkPosition, LinkModel>(),
                 };
                 for (const link of meta.links) {
+                    // Get link path
                     const linkPath = getLinkpath(link.link);
                     // Look through the cache to determine if the link goes anywhere
                     const target = this.app.metadataCache.getFirstLinkpathDest(linkPath, file.path);
-                    if (target == null) {
+                    let targetIsMissing = target == null;
+
+                    // When deepScan == true, check for missing headings
+                    if (target != null && deepScan && link.link.contains("#")) {
+                        // Get contents of target file
+                        const contents = await this.app.vault.cachedRead(target);
+                        let reg: RegExp;
+                        if (link.link.contains("^")) {
+                            // Block Links
+                            reg = new RegExp(`^.*\\^${link.link.slice(link.link.indexOf("^") + 1)}$`, "m");
+                        } else {
+                            // Heading Link
+                            reg = new RegExp(`^#+ ${link.link.slice(link.link.indexOf("#") + 1)}.*$`, "m");
+                        }
+                        if (!reg.test(contents)) {
+                            targetIsMissing = true;
+                        }
+                    }
+
+                    if (targetIsMissing) {
                         // Parse the path and build into the folder model
                         const pathParts = file.path.split("/");
                         // Nest in folders collection
