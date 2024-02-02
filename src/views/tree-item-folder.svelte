@@ -14,7 +14,7 @@
     <div class="tree-item-self is-clickable nav-folder-title" on:click={() => (isCollapsed = !isCollapsed)}>
         <div class="tree-item-icon collapse-icon nav-folder-collapse-indicator" class:is-collapsed={isCollapsed} data-icon="right-triangle"></div>
         <div class="tree-item-icon" data-icon="lucide-folder"></div>
-        <div class="tree-item-inner nav-folder-title-content">{folder.id}</div>
+        <div class="tree-item-inner nav-folder-title-content">{folder.name}</div>
         <div class="tree-item-flair-outer nav-folder-link-count">
             <span class="tree-item-flair">{folder.linkCount}</span>
         </div>
