@@ -1,6 +1,6 @@
 <script lang="ts">
     import { FolderModel, LinkModel } from "src/models";
-    import { getFile, getFolder, getSortedKeys } from "src/utils";
+    import { getFile, getFolder, getSortedKeys } from "src/links";
     import Folder from "./tree-item-folder.svelte";
     import File from "./tree-item-file.svelte";
 

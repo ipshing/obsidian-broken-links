@@ -4,7 +4,7 @@
     import { afterUpdate } from "svelte";
     import Folder from "./tree-item-folder.svelte";
     import File from "./tree-item-file.svelte";
-    import { getFile, getFolder, getSortedKeys } from "src/utils";
+    import { getFile, getFolder, getSortedKeys } from "src/links";
 
     export let folders: Map<string, FolderModel>;
     export let files: Map<string, FileModel>;

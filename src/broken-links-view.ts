@@ -74,6 +74,7 @@ export class BrokenLinksView extends ItemView {
                 // Scroll to section and highlight
                 if (leaf.view instanceof MarkdownView) {
                     if (leaf.view.currentMode instanceof MarkdownPreviewView) {
+                        // @ts-ignore
                         const renderer = leaf.view.currentMode.renderer; // trust me, it's there
                         renderer.onRendered(() => {
                             renderer.applyScroll(link.position.start.line, {

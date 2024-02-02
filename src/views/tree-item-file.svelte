@@ -1,6 +1,6 @@
 <script lang="ts">
     import { FileModel, LinkModel } from "src/models";
-    import { getLink, getSortedLinkKeys } from "src/utils";
+    import { getLink, getSortedLinkKeys } from "src/links";
     import Link from "./tree-item-link.svelte";
 
     export let file: FileModel;
