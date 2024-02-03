@@ -1,7 +1,7 @@
 import { ItemView, Keymap, MarkdownPreviewView, MarkdownView, TFile, WorkspaceLeaf } from "obsidian";
 import BrokenLinks from "./main";
 import { LinkModel } from "./models";
-import FileListView from "./views/file-list.svelte";
+import FileListView from "./views/folder-list.svelte";
 import { getLinksByFolder } from "./links";
 
 export const BROKEN_LINKS_VIEW_TYPE = "broken-links-view";

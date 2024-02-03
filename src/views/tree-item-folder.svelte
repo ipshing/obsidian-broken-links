@@ -4,11 +4,13 @@
     import Folder from "./tree-item-folder.svelte";
     import File from "./tree-item-file.svelte";
     import BrokenLinks from "src/main";
-    import { afterUpdate, beforeUpdate } from "svelte";
+    import { afterUpdate } from "svelte";
 
     export let plugin: BrokenLinks;
     export let folder: FolderModel;
     export let linkClicked: (e: MouseEvent, link: LinkModel) => void;
+    export let folderExpanded: () => void;
+    export let fileExpanded: () => void;
 
     let isCollapsed: boolean = !plugin.settings.expandedItems.contains(folder.path);
 
@@ -21,6 +23,7 @@
             plugin.settings.expandedItems.remove(folder.path);
         } else {
             plugin.settings.expandedItems.push(folder.path);
+            folderExpanded();
         }
         await plugin.saveSettings();
     }
@@ -39,10 +42,10 @@
     </div>
     <div class="tree-item-children nav-folder-children" class:hidden={isCollapsed}>
         {#each getSortedKeys(folder.folders) as key}
-            <Folder {plugin} folder={getFolder(key, folder.folders)} {linkClicked} />
+            <Folder {plugin} folder={getFolder(key, folder.folders)} {linkClicked} {folderExpanded} {fileExpanded} />
         {/each}
         {#each getSortedKeys(folder.files) as key}
-            <File {plugin} file={getFile(key, folder.files)} {linkClicked} />
+            <File {plugin} file={getFile(key, folder.files)} {linkClicked} {fileExpanded} />
         {/each}
     </div>
 </div>

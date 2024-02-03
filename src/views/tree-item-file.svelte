@@ -3,11 +3,12 @@
     import { getLink, getSortedLinkKeys } from "src/links";
     import Link from "./tree-item-link.svelte";
     import BrokenLinks from "src/main";
-    import { afterUpdate, beforeUpdate } from "svelte";
+    import { afterUpdate } from "svelte";
 
     export let plugin: BrokenLinks;
     export let file: FileModel;
     export let linkClicked: (e: MouseEvent, link: LinkModel) => void;
+    export let fileExpanded: () => void;
 
     let isCollapsed: boolean = !plugin.settings.expandedItems.contains(file.path);
 
@@ -20,6 +21,7 @@
             plugin.settings.expandedItems.remove(file.path);
         } else {
             plugin.settings.expandedItems.push(file.path);
+            fileExpanded();
         }
         await plugin.saveSettings();
     }

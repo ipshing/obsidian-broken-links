@@ -4,11 +4,13 @@ import { BROKEN_LINKS_VIEW_TYPE, BrokenLinksView } from "./broken-links-view";
 
 interface BrokenLinksSettings {
     showRibbonIcon: boolean;
+    expandButton: boolean;
     expandedItems: string[];
 }
 
 const DEFAULT_SETTINGS: BrokenLinksSettings = {
     showRibbonIcon: true,
+    expandButton: true,
     expandedItems: [],
 };
 
