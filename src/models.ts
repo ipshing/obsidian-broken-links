@@ -3,6 +3,7 @@ import { Pos } from "obsidian";
 export interface FolderModel {
     name: string;
     parent?: FolderModel;
+    path: string;
     folders: Map<string, FolderModel>;
     files: Map<string, FileModel>;
     linkCount: number;

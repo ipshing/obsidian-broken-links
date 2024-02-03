@@ -62,43 +62,47 @@ export async function getLinksByFolder(plugin: BrokenLinks, deepScan = false): P
                 if (pathParts.length > 0) {
                     // Nest in folders collection
                     let parentFolder: FolderModel | null = null;
+                    let folderPath = "";
                     for (let i = 0; i < pathParts.length - 1; i++) {
-                        const id = pathParts[i];
+                        const folderName = pathParts[i];
+                        folderPath = folderPath.length === 0 ? folderName : `${folderPath}/${folderName}`;
                         // If parentFolder is null, add it to the root,
                         // otherwise nest it into the parentFolder
                         if (parentFolder === null) {
                             // Look for existing folder or create
                             // a new one and set it as the parent
-                            if (folders.has(id)) {
-                                parentFolder = folders.get(id)!; // eslint-disable-line
+                            if (folders.has(folderName)) {
+                                parentFolder = folders.get(folderName)!; // eslint-disable-line
                                 // Increment link count
                                 parentFolder.linkCount++;
                             } else {
                                 // Add to root
                                 parentFolder = {
-                                    name: id,
+                                    name: folderName,
+                                    path: folderPath,
                                     folders: new Map<string, FolderModel>(),
                                     files: new Map<string, FileModel>(),
                                     linkCount: 1, // default to 1
                                 };
-                                folders.set(id, parentFolder);
+                                folders.set(folderName, parentFolder);
                             }
                         } else {
                             // Look for existing child folder or create
                             // a new one and add it to the parent
                             let childFolder: FolderModel | null = null;
-                            if (parentFolder.folders.has(id)) {
-                                childFolder = parentFolder.folders.get(id)!; // eslint-disable-line
+                            if (parentFolder.folders.has(folderName)) {
+                                childFolder = parentFolder.folders.get(folderName)!; // eslint-disable-line
                                 // Increment link count
                                 childFolder.linkCount++;
                             } else {
                                 childFolder = {
-                                    name: id,
+                                    name: folderName,
+                                    path: folderPath,
                                     folders: new Map<string, FolderModel>(),
                                     files: new Map<string, FileModel>(),
                                     linkCount: 1, // default to 1
                                 };
-                                parentFolder.folders.set(id, childFolder);
+                                parentFolder.folders.set(folderName, childFolder);
                             }
                             // Set the child folder as the parent and recurse
                             parentFolder = childFolder;
