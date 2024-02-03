@@ -39,7 +39,7 @@ export async function getLinksByFolder(plugin: BrokenLinks): Promise<{ folders: 
                         const heading = link.link.slice(link.link.indexOf("#") + 1);
                         destIsMissing =
                             targetCache.headings.find((value) => {
-                                if (value.heading == heading) {
+                                if (value.heading == heading || value.heading.replace(":", "") == heading) {
                                     return value;
                                 }
                                 return undefined;
