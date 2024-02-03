@@ -34,6 +34,7 @@ export class BrokenLinksView extends ItemView {
         this.fileList = new FileListView({
             target: this.containerEl,
             props: {
+                plugin: this.plugin,
                 folders: list.folders,
                 files: list.files,
                 linkClicked: this.linkClickedHandler.bind(this),

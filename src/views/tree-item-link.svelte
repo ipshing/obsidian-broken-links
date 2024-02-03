@@ -6,6 +6,8 @@
 </script>
 
 <div class="tree-item nav-link">
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div
         class="tree-item-self is-clickable nav-link-title"
         on:click={(e) => {

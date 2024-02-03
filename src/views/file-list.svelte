@@ -1,11 +1,13 @@
 <script lang="ts">
     import { setIcon } from "obsidian";
     import { FileModel, FolderModel, LinkModel } from "src/models";
-    import { afterUpdate } from "svelte";
+    import { afterUpdate, beforeUpdate } from "svelte";
     import Folder from "./tree-item-folder.svelte";
     import File from "./tree-item-file.svelte";
     import { getFile, getFolder, getSortedKeys } from "src/links";
+    import BrokenLinks from "src/main";
 
+    export let plugin: BrokenLinks;
     export let folders: Map<string, FolderModel>;
     export let files: Map<string, FileModel>;
     export let linkClicked: (e: MouseEvent, link: LinkModel) => void;
@@ -13,7 +15,7 @@
     let container: HTMLElement;
 
     afterUpdate(() => {
-        // Call in afterUpdate once all items have been populated
+        // Set icons after all items have been populated
         container.querySelectorAll(".tree-item-icon").forEach((el) => setIcon(el as HTMLElement, el.getAttr("data-icon") ?? ""));
     });
 </script>
@@ -27,10 +29,10 @@
         </div>
         <div class="tree-item-children nav-folder-children">
             {#each getSortedKeys(folders) as key}
-                <Folder folder={getFolder(key, folders)} {linkClicked} />
+                <Folder {plugin} folder={getFolder(key, folders)} {linkClicked} />
             {/each}
             {#each getSortedKeys(files) as key}
-                <File file={getFile(key, files)} {linkClicked} />
+                <File {plugin} file={getFile(key, files)} {linkClicked} />
             {/each}
         </div>
     </div>
