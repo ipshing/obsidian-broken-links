@@ -4,12 +4,10 @@ import { BROKEN_LINKS_VIEW_TYPE, BrokenLinksView } from "./broken-links-view";
 
 interface BrokenLinksSettings {
     showRibbonIcon: boolean;
-    deepScan: boolean;
 }
 
 const DEFAULT_SETTINGS: BrokenLinksSettings = {
     showRibbonIcon: true,
-    deepScan: false,
 };
 
 export default class BrokenLinks extends Plugin {

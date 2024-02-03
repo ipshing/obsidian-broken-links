@@ -3,7 +3,7 @@ import { FileModel, FolderModel, LinkModel } from "./models";
 import BrokenLinks from "./main";
 import { error } from "console";
 
-export async function getLinksByFolder(plugin: BrokenLinks, deepScan = false): Promise<{ folders: Map<string, FolderModel>; files: Map<string, FileModel> }> {
+export async function getLinksByFolder(plugin: BrokenLinks): Promise<{ folders: Map<string, FolderModel>; files: Map<string, FileModel> }> {
     // Set up models for the root
     const folders = new Map<string, FolderModel>();
     const files = new Map<string, FileModel>();
@@ -128,7 +128,7 @@ export async function getLinksByFolder(plugin: BrokenLinks, deepScan = false): P
     return { folders: folders, files: files };
 }
 
-export async function getLinksByFile(plugin: BrokenLinks, deepScan = false): Promise<FileModel[]> {
+export async function getLinksByFile(plugin: BrokenLinks): Promise<FileModel[]> {
     const files: FileModel[] = [];
 
     // Iterate all the files in the vault

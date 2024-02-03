@@ -13,9 +13,6 @@ export class BrokenLinksView extends ItemView {
     constructor(leaf: WorkspaceLeaf, plugin: BrokenLinks) {
         super(leaf);
         this.plugin = plugin;
-        // Bind "this" to methods for callbacks
-        this.updateView = this.updateView.bind(this);
-        this.linkClickedHandler = this.linkClickedHandler.bind(this);
     }
 
     getViewType(): string {
@@ -31,7 +28,7 @@ export class BrokenLinksView extends ItemView {
     async onOpen() {
         console.time("Broken Links onOpen");
 
-        const list = await getLinksByFolder(this.plugin, this.plugin.settings.deepScan);
+        const list = await getLinksByFolder(this.plugin);
 
         this.containerEl.empty();
         this.fileList = new FileListView({
@@ -39,12 +36,12 @@ export class BrokenLinksView extends ItemView {
             props: {
                 folders: list.folders,
                 files: list.files,
-                linkClicked: this.linkClickedHandler,
+                linkClicked: this.linkClickedHandler.bind(this),
             },
         });
 
         // Add callback to update the view when files get changed
-        this.registerEvent(this.app.metadataCache.on("resolved", this.updateView));
+        this.registerEvent(this.app.metadataCache.on("resolved", this.updateView.bind(this)));
 
         console.timeEnd("Broken Links onOpen");
     }
@@ -56,7 +53,7 @@ export class BrokenLinksView extends ItemView {
     async updateView() {
         console.time("Broken Links updateView");
 
-        const list = await getLinksByFolder(this.plugin, this.plugin.settings.deepScan);
+        const list = await getLinksByFolder(this.plugin);
         this.fileList.$set({
             folders: list.folders,
             files: list.files,
