@@ -4,8 +4,8 @@ export interface FolderModel {
     name: string;
     parent?: FolderModel;
     path: string;
-    folders: Map<string, FolderModel>;
-    files: Map<string, FileModel>;
+    folders: FolderModel[];
+    files: FileModel[];
     linkCount: number;
 }
 
@@ -15,7 +15,7 @@ export interface FileModel {
     path: string;
     created: number;
     modified: number;
-    links: Map<number, LinkModel>;
+    links: LinkModel[];
 }
 
 export interface LinkModel {

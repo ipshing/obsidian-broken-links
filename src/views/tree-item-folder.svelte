@@ -1,6 +1,5 @@
 <script lang="ts">
     import { FolderModel, LinkModel } from "src/models";
-    import { getFile, getFolder, getSortedKeys } from "src/links";
     import Folder from "./tree-item-folder.svelte";
     import File from "./tree-item-file.svelte";
     import BrokenLinks from "src/main";
@@ -12,17 +11,17 @@
     export let folderExpanded: () => void;
     export let fileExpanded: () => void;
 
-    let isCollapsed: boolean = !plugin.settings.expandedItems.contains(folder.path);
+    let isCollapsed: boolean = !plugin.settings.expandedFolderItems.contains(folder.path);
 
     afterUpdate(() => {
-        isCollapsed = !plugin.settings.expandedItems.contains(folder.path);
+        isCollapsed = !plugin.settings.expandedFolderItems.contains(folder.path);
     });
     async function toggleExpand() {
         isCollapsed = !isCollapsed;
         if (isCollapsed) {
-            plugin.settings.expandedItems.remove(folder.path);
+            plugin.settings.expandedFolderItems.remove(folder.path);
         } else {
-            plugin.settings.expandedItems.push(folder.path);
+            plugin.settings.expandedFolderItems.push(folder.path);
             folderExpanded();
         }
         await plugin.saveSettings();
@@ -41,11 +40,11 @@
         </div>
     </div>
     <div class="tree-item-children nav-folder-children" class:hidden={isCollapsed}>
-        {#each getSortedKeys(folder.folders) as key}
-            <Folder {plugin} folder={getFolder(key, folder.folders)} {linkClicked} {folderExpanded} {fileExpanded} />
+        {#each folder.folders as subfolder}
+            <Folder {plugin} folder={subfolder} {linkClicked} {folderExpanded} {fileExpanded} />
         {/each}
-        {#each getSortedKeys(folder.files) as key}
-            <File {plugin} file={getFile(key, folder.files)} {linkClicked} {fileExpanded} />
+        {#each folder.files as file}
+            <File {plugin} {file} {linkClicked} {fileExpanded} />
         {/each}
     </div>
 </div>

@@ -4,14 +4,20 @@ import { BROKEN_LINKS_VIEW_TYPE, BrokenLinksView } from "./broken-links-view";
 
 interface BrokenLinksSettings {
     showRibbonIcon: boolean;
+    groupBy: "folder" | "file" | "link";
     expandButton: boolean;
-    expandedItems: string[];
+    expandedFolderItems: string[];
+    expandedFileItems: string[];
+    expandedLinkItems: string[];
 }
 
 const DEFAULT_SETTINGS: BrokenLinksSettings = {
     showRibbonIcon: true,
+    groupBy: "folder",
     expandButton: true,
-    expandedItems: [],
+    expandedFolderItems: [],
+    expandedFileItems: [],
+    expandedLinkItems: [],
 };
 
 export default class BrokenLinks extends Plugin {
