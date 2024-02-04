@@ -13,6 +13,9 @@ div[data-type="broken-links-view"] > .nav-files-container {
 div[data-type="broken-links-view"] .nav-folder.mod-root > .nav-folder-title {
     font-size: var(--font-ui-medium);
 }
+div[data-type="broken-links-view"] .nav-folder.mod-root > .nav-folder-children .nav-folder .nav-folder-title-content {
+    font-weight: var(--font-semibold);
+}
 div[data-type="broken-links-view"] .nav-folder-children .nav-folder-title > .tree-item-icon + .tree-item-icon {
     margin-left: 0;
 }
