@@ -12,7 +12,8 @@
     export let folderTree: FolderModel;
     export let fileTree: FileModel[];
     export let linkTree: LinkModel[][];
-    export let groupByClicked: (e: MouseEvent) => void;
+    export let groupByButtonClicked: (e: MouseEvent) => void;
+    export let sortButtonClicked: (e: MouseEvent) => void;
     export let linkClicked: (e: MouseEvent, link: LinkModel) => void;
 
     let header: HTMLElement;
@@ -75,7 +76,10 @@
     <div class="nav-buttons-container">
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <!-- svelte-ignore a11y-no-static-element-interactions -->
-        <div class="clickable-icon nav-action-button" aria-label="Group by" data-icon="list" on:click={groupByClicked}></div>
+        <div class="clickable-icon nav-action-button" aria-label="Group by" data-icon="list" on:click={groupByButtonClicked}></div>
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
+        <!-- svelte-ignore a11y-no-static-element-interactions -->
+        <div class="clickable-icon nav-action-button" aria-label="Change sort order" data-icon="lucide-sort-asc" on:click={sortButtonClicked}></div>
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <!-- svelte-ignore a11y-no-static-element-interactions -->
         <div class="clickable-icon nav-action-button" aria-label={expandLabel} data-icon={expandIcon} on:click={toggleExpandButton}></div>

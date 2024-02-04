@@ -9,6 +9,9 @@ interface BrokenLinksSettings {
     expandedFolderItems: string[];
     expandedFileItems: string[];
     expandedLinkItems: string[];
+    folderSort: "nameAsc" | "nameDesc";
+    fileSort: "nameAsc" | "nameDesc" | "countAsc" | "countDesc";
+    linkSort: "nameAsc" | "nameDesc" | "countAsc" | "countDesc";
 }
 
 const DEFAULT_SETTINGS: BrokenLinksSettings = {
@@ -18,6 +21,9 @@ const DEFAULT_SETTINGS: BrokenLinksSettings = {
     expandedFolderItems: [],
     expandedFileItems: [],
     expandedLinkItems: [],
+    folderSort: "nameAsc",
+    fileSort: "countDesc",
+    linkSort: "countDesc",
 };
 
 export default class BrokenLinks extends Plugin {

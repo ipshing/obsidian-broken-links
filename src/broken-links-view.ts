@@ -39,7 +39,8 @@ export class BrokenLinksView extends ItemView {
                 folderTree: links.byFolder,
                 fileTree: links.byFile,
                 linkTree: links.byLink,
-                groupByClicked: this.groupClickedHandler.bind(this),
+                groupByButtonClicked: this.groupByButtonClickedHandler.bind(this),
+                sortButtonClicked: this.sortButtonClickedHandler.bind(this),
                 linkClicked: this.linkClickedHandler.bind(this),
             },
         });
@@ -218,31 +219,9 @@ export class BrokenLinksView extends ItemView {
         // Sort folder tree
         this.sortFolderTree(byFolder);
         // Sort file tree
-        byFile = byFile.sort((a, b) => {
-            if (a.name.toLocaleLowerCase() < b.name.toLocaleLowerCase()) return -1;
-            else if (a.name.toLocaleLowerCase() > b.name.toLocaleLowerCase()) return 1;
-            else return 0;
-        });
-        byFile.forEach((file) => {
-            file.links = file.links.sort((a, b) => {
-                if (a.position.start.offset < b.position.start.offset) return -1;
-                else if (a.position.start.offset > b.position.start.offset) return 1;
-                else return 0;
-            });
-        });
+        byFile = this.sortFileTree(byFile);
         // Sort link tree
-        byLink = byLink.sort((a, b) => {
-            if (a[0].id.toLocaleLowerCase() < b[0].id.toLocaleLowerCase()) return -1;
-            else if (a[0].id.toLocaleLowerCase() > b[0].id.toLocaleLowerCase()) return 1;
-            else return 0;
-        });
-        for (let i = 0; i < byLink.length; i++) {
-            byLink[i] = byLink[i].sort((a, b) => {
-                if (a.parent.path.toLocaleLowerCase() < b.parent.path.toLocaleLowerCase()) return -1;
-                if (a.parent.path.toLocaleLowerCase() > b.parent.path.toLocaleLowerCase()) return 1;
-                else return 0;
-            });
-        }
+        byLink = this.sortLinkTree(byLink);
 
         return {
             byFolder,
@@ -252,19 +231,21 @@ export class BrokenLinksView extends ItemView {
     }
 
     sortFolderTree(folder: FolderModel) {
-        // Sort folders
+        // Sort folders A to Z
         folder.folders = folder.folders.sort((a, b) => {
             if (a.name.toLocaleLowerCase() < b.name.toLocaleLowerCase()) return -1;
             else if (a.name.toLocaleLowerCase() > b.name.toLocaleLowerCase()) return 1;
             else return 0;
         });
-        // Sort files
+        // Sort files according to settings
         folder.files = folder.files.sort((a, b) => {
-            if (a.name.toLocaleLowerCase() < b.name.toLocaleLowerCase()) return -1;
-            else if (a.name.toLocaleLowerCase() > b.name.toLocaleLowerCase()) return 1;
-            else return 0;
+            let place = 0;
+            if (a.name.toLocaleLowerCase() < b.name.toLocaleLowerCase()) place = -1;
+            else if (a.name.toLocaleLowerCase() > b.name.toLocaleLowerCase()) place = 1;
+            if (this.plugin.settings.folderSort == "nameDesc") place *= -1;
+            return place;
         });
-        // Sort links
+        // Sort links by position
         folder.files.forEach((file) => {
             file.links = file.links.sort((a, b) => {
                 if (a.position.start.offset < b.position.start.offset) return -1;
@@ -279,7 +260,69 @@ export class BrokenLinksView extends ItemView {
         });
     }
 
-    groupClickedHandler(e: MouseEvent) {
+    sortFileTree(files: FileModel[]): FileModel[] {
+        // Sort files according to settings
+        const sorted = files.sort((a, b) => {
+            let place = 0;
+            if (this.plugin.settings.fileSort.startsWith("name")) {
+                if (a.name.toLocaleLowerCase() < b.name.toLocaleLowerCase()) place = -1;
+                else if (a.name.toLocaleLowerCase() > b.name.toLocaleLowerCase()) place = 1;
+                if (this.plugin.settings.fileSort == "nameDesc") place *= -1;
+            } else if (this.plugin.settings.fileSort.startsWith("count")) {
+                if (a.links.length < b.links.length) place = -1;
+                else if (a.links.length > b.links.length) place = 1;
+                if (this.plugin.settings.fileSort == "countDesc") place *= -1;
+                // For same link count, default to A to Z
+                if (a.links.length == b.links.length) {
+                    if (a.name.toLocaleLowerCase() < b.name.toLocaleLowerCase()) place = -1;
+                    else if (a.name.toLocaleLowerCase() > b.name.toLocaleLowerCase()) place = 1;
+                }
+            }
+            return place;
+        });
+        // Sort links by position
+        sorted.forEach((file) => {
+            file.links = file.links.sort((a, b) => {
+                if (a.position.start.offset < b.position.start.offset) return -1;
+                else if (a.position.start.offset > b.position.start.offset) return 1;
+                else return 0;
+            });
+        });
+        return sorted;
+    }
+
+    sortLinkTree(links: LinkModel[][]): LinkModel[][] {
+        // Sort links according to settings
+        const sorted = links.sort((a, b) => {
+            let place = 0;
+            if (this.plugin.settings.linkSort.startsWith("name")) {
+                if (a[0].id.toLocaleLowerCase() < b[0].id.toLocaleLowerCase()) place = -1;
+                else if (a[0].id.toLocaleLowerCase() > b[0].id.toLocaleLowerCase()) place = 1;
+                if (this.plugin.settings.linkSort == "nameDesc") place *= -1;
+            } else if (this.plugin.settings.linkSort.startsWith("count")) {
+                if (a.length < b.length) place = -1;
+                else if (a.length > b.length) place = 1;
+                if (this.plugin.settings.linkSort == "countDesc") place *= -1;
+                // For same link count, default to A to Z
+                if (a.length == b.length) {
+                    if (a[0].id.toLocaleLowerCase() < b[0].id.toLocaleLowerCase()) place = -1;
+                    else if (a[0].id.toLocaleLowerCase() > b[0].id.toLocaleLowerCase()) place = 1;
+                }
+            }
+            return place;
+        });
+        // Sort files A to Z
+        for (let i = 0; i < sorted.length; i++) {
+            sorted[i] = sorted[i].sort((a, b) => {
+                if (a.parent.name.toLocaleLowerCase() < b.parent.name.toLocaleLowerCase()) return -1;
+                if (a.parent.name.toLocaleLowerCase() > b.parent.name.toLocaleLowerCase()) return 1;
+                else return 0;
+            });
+        }
+        return sorted;
+    }
+
+    groupByButtonClickedHandler(e: MouseEvent) {
         const menu = new Menu();
         menu.addItem((item) =>
             item
@@ -324,6 +367,159 @@ export class BrokenLinksView extends ItemView {
                 })
         );
         menu.showAtMouseEvent(e);
+    }
+
+    sortButtonClickedHandler(e: MouseEvent) {
+        const menu = new Menu();
+        if (this.plugin.settings.groupBy == "folder") {
+            menu.addItem((item) =>
+                item
+                    .setTitle("File name (A to Z)")
+                    .setChecked(this.plugin.settings.folderSort == "nameAsc")
+                    .onClick(async () => {
+                        if (this.plugin.settings.folderSort != "nameAsc") {
+                            // Update settings
+                            this.plugin.settings.folderSort = "nameAsc";
+                            await this.plugin.saveSettings();
+                            // Refresh links list
+                            await this.updateView();
+                        }
+                    })
+            );
+            menu.addItem((item) =>
+                item
+                    .setTitle("File name (Z to A)")
+                    .setChecked(this.plugin.settings.folderSort == "nameDesc")
+                    .onClick(async () => {
+                        if (this.plugin.settings.folderSort != "nameDesc") {
+                            // Update settings
+                            this.plugin.settings.folderSort = "nameDesc";
+                            await this.plugin.saveSettings();
+                            // Refresh links list
+                            await this.updateView();
+                        }
+                    })
+            );
+            menu.showAtMouseEvent(e);
+        } else if (this.plugin.settings.groupBy == "file") {
+            menu.addItem((item) =>
+                item
+                    .setTitle("File name (A to Z)")
+                    .setChecked(this.plugin.settings.fileSort == "nameAsc")
+                    .onClick(async () => {
+                        if (this.plugin.settings.fileSort != "nameAsc") {
+                            // Update settings
+                            this.plugin.settings.fileSort = "nameAsc";
+                            await this.plugin.saveSettings();
+                            // Refresh links list
+                            await this.updateView();
+                        }
+                    })
+            );
+            menu.addItem((item) =>
+                item
+                    .setTitle("File name (Z to A)")
+                    .setChecked(this.plugin.settings.fileSort == "nameDesc")
+                    .onClick(async () => {
+                        if (this.plugin.settings.fileSort != "nameDesc") {
+                            // Update settings
+                            this.plugin.settings.fileSort = "nameDesc";
+                            await this.plugin.saveSettings();
+                            // Refresh links list
+                            await this.updateView();
+                        }
+                    })
+            );
+            menu.addSeparator();
+            menu.addItem((item) =>
+                item
+                    .setTitle("Link count (Least to Most)")
+                    .setChecked(this.plugin.settings.fileSort == "countAsc")
+                    .onClick(async () => {
+                        if (this.plugin.settings.fileSort != "countAsc") {
+                            // Update settings
+                            this.plugin.settings.fileSort = "countAsc";
+                            await this.plugin.saveSettings();
+                            // Refresh links list
+                            await this.updateView();
+                        }
+                    })
+            );
+            menu.addItem((item) =>
+                item
+                    .setTitle("Link count (Most to Least)")
+                    .setChecked(this.plugin.settings.fileSort == "countDesc")
+                    .onClick(async () => {
+                        if (this.plugin.settings.fileSort != "countDesc") {
+                            // Update settings
+                            this.plugin.settings.fileSort = "countDesc";
+                            await this.plugin.saveSettings();
+                            // Refresh links list
+                            await this.updateView();
+                        }
+                    })
+            );
+            menu.showAtMouseEvent(e);
+        } else if (this.plugin.settings.groupBy == "link") {
+            menu.addItem((item) =>
+                item
+                    .setTitle("File name (A to Z)")
+                    .setChecked(this.plugin.settings.linkSort == "nameAsc")
+                    .onClick(async () => {
+                        if (this.plugin.settings.linkSort != "nameAsc") {
+                            // Update settings
+                            this.plugin.settings.linkSort = "nameAsc";
+                            await this.plugin.saveSettings();
+                            // Refresh links list
+                            await this.updateView();
+                        }
+                    })
+            );
+            menu.addItem((item) =>
+                item
+                    .setTitle("File name (Z to A)")
+                    .setChecked(this.plugin.settings.linkSort == "nameDesc")
+                    .onClick(async () => {
+                        if (this.plugin.settings.linkSort != "nameDesc") {
+                            // Update settings
+                            this.plugin.settings.linkSort = "nameDesc";
+                            await this.plugin.saveSettings();
+                            // Refresh links list
+                            await this.updateView();
+                        }
+                    })
+            );
+            menu.addSeparator();
+            menu.addItem((item) =>
+                item
+                    .setTitle("Link count (Least to Most)")
+                    .setChecked(this.plugin.settings.linkSort == "countAsc")
+                    .onClick(async () => {
+                        if (this.plugin.settings.linkSort != "countAsc") {
+                            // Update settings
+                            this.plugin.settings.linkSort = "countAsc";
+                            await this.plugin.saveSettings();
+                            // Refresh links list
+                            await this.updateView();
+                        }
+                    })
+            );
+            menu.addItem((item) =>
+                item
+                    .setTitle("Link count (Most to Least)")
+                    .setChecked(this.plugin.settings.linkSort == "countDesc")
+                    .onClick(async () => {
+                        if (this.plugin.settings.linkSort != "countDesc") {
+                            // Update settings
+                            this.plugin.settings.linkSort = "countDesc";
+                            await this.plugin.saveSettings();
+                            // Refresh links list
+                            await this.updateView();
+                        }
+                    })
+            );
+            menu.showAtMouseEvent(e);
+        }
     }
 
     async linkClickedHandler(e: MouseEvent, link: LinkModel) {
