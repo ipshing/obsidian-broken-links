@@ -6,5 +6,6 @@
     "description": "Find broken links in your vault that don't connect to notes.",
     "author": "ipshing",
     "authorUrl": "https://github.com/ipshing",
-    "isDesktopOnly": false
+    "isDesktopOnly": false,
+    "fundingUrl": "https://ko-fi.com/ipshing"
 }
