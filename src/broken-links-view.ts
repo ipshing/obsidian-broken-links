@@ -25,8 +25,6 @@ export class BrokenLinksView extends ItemView {
     }
 
     async onOpen() {
-        console.time("Broken Links onOpen");
-
         const links = await this.getBrokenLinks();
 
         this.containerEl.empty();
@@ -47,8 +45,6 @@ export class BrokenLinksView extends ItemView {
 
         // Add callback to update the view when files get changed
         this.registerEvent(this.app.metadataCache.on("resolved", this.updateView.bind(this)));
-
-        console.timeEnd("Broken Links onOpen");
     }
 
     async onClose() {
@@ -56,16 +52,12 @@ export class BrokenLinksView extends ItemView {
     }
 
     async updateView() {
-        console.time("Broken Links updateView");
-
         const links = await this.getBrokenLinks();
         this.brokenLinksTree.$set({
             folderTree: links.byFolder,
             fileTree: links.byFile,
             linkTree: links.byLink,
         });
-
-        console.timeEnd("Broken Links updateView");
     }
 
     async getBrokenLinks(): Promise<{
