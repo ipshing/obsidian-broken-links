@@ -52,7 +52,7 @@
                         linkClicked(e, link);
                     }}
                 >
-                    <div class="tree-item-inner nav-link-title-content">{link.parent.name} (line: {link.position.start.line})</div>
+                    <div class="tree-item-inner nav-link-title-content">{link.parent.name} (line: {link.position.start.line + 1})</div>
                 </div>
             </div>
         {/each}
