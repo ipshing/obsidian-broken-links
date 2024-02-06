@@ -35,14 +35,14 @@ export default class BrokenLinks extends Plugin {
         this.registerView(BROKEN_LINKS_VIEW_TYPE, (leaf) => new BrokenLinksView(leaf, this));
 
         if (this.settings.showRibbonIcon) {
-            this.addRibbonIcon("unlink", "Open Broken Links list", () => {
+            this.addRibbonIcon("unlink", "View broken links", () => {
                 this.activateView();
             });
         }
 
         this.addCommand({
             id: "list",
-            name: "Open Broken Links list",
+            name: "View broken links",
             callback: () => {
                 this.activateView();
             },
