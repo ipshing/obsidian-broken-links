@@ -18,7 +18,7 @@ export class BrokenLinksView extends ItemView {
         return BROKEN_LINKS_VIEW_TYPE;
     }
     getDisplayText(): string {
-        return "Broken Links List";
+        return "Broken links list";
     }
     getIcon(): string {
         return "unlink";
@@ -318,7 +318,7 @@ export class BrokenLinksView extends ItemView {
         const menu = new Menu();
         menu.addItem((item) =>
             item
-                .setTitle("Group by Folder")
+                .setTitle("Group by folder")
                 .setIcon("lucide-folder")
                 .onClick(async () => {
                     if (this.plugin.settings.groupBy != "folder") {
@@ -332,7 +332,7 @@ export class BrokenLinksView extends ItemView {
         );
         menu.addItem((item) =>
             item
-                .setTitle("Group by File")
+                .setTitle("Group by file")
                 .setIcon("lucide-file")
                 .onClick(async () => {
                     if (this.plugin.settings.groupBy != "file") {
@@ -346,7 +346,7 @@ export class BrokenLinksView extends ItemView {
         );
         menu.addItem((item) =>
             item
-                .setTitle("Group by Link")
+                .setTitle("Group by link")
                 .setIcon("lucide-link")
                 .onClick(async () => {
                     if (this.plugin.settings.groupBy != "link") {
@@ -425,7 +425,7 @@ export class BrokenLinksView extends ItemView {
             menu.addSeparator();
             menu.addItem((item) =>
                 item
-                    .setTitle("Link count (Least to Most)")
+                    .setTitle("Link count (fewest to most)")
                     .setChecked(this.plugin.settings.fileSort == "countAsc")
                     .onClick(async () => {
                         if (this.plugin.settings.fileSort != "countAsc") {
@@ -439,7 +439,7 @@ export class BrokenLinksView extends ItemView {
             );
             menu.addItem((item) =>
                 item
-                    .setTitle("Link count (Most to Least)")
+                    .setTitle("Link count (most to fewest)")
                     .setChecked(this.plugin.settings.fileSort == "countDesc")
                     .onClick(async () => {
                         if (this.plugin.settings.fileSort != "countDesc") {
@@ -484,7 +484,7 @@ export class BrokenLinksView extends ItemView {
             menu.addSeparator();
             menu.addItem((item) =>
                 item
-                    .setTitle("Link count (Least to Most)")
+                    .setTitle("Link count (fewest to most)")
                     .setChecked(this.plugin.settings.linkSort == "countAsc")
                     .onClick(async () => {
                         if (this.plugin.settings.linkSort != "countAsc") {
@@ -498,7 +498,7 @@ export class BrokenLinksView extends ItemView {
             );
             menu.addItem((item) =>
                 item
-                    .setTitle("Link count (Most to Least)")
+                    .setTitle("Link count (most to fewest)")
                     .setChecked(this.plugin.settings.linkSort == "countDesc")
                     .onClick(async () => {
                         if (this.plugin.settings.linkSort != "countDesc") {
