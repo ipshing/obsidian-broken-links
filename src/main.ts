@@ -1,5 +1,4 @@
 import { Plugin, WorkspaceLeaf } from "obsidian";
-import { BrokenLinksSettingsTab } from "./settings";
 import { BROKEN_LINKS_VIEW_TYPE, BrokenLinksView } from "./broken-links-view";
 
 interface BrokenLinksSettings {
@@ -47,8 +46,6 @@ export default class BrokenLinks extends Plugin {
                 this.activateView();
             },
         });
-
-        this.addSettingTab(new BrokenLinksSettingsTab(this.app, this));
 
         console.log("Broken Links plugin loaded");
     }

@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
+import { App, PluginSettingTab } from "obsidian";
 import BrokenLinks from "./main";
 
 export class BrokenLinksSettingsTab extends PluginSettingTab {
@@ -15,20 +15,5 @@ export class BrokenLinksSettingsTab extends PluginSettingTab {
         containerEl.empty();
 
         containerEl.addClass("broken-links-settings");
-
-        new Setting(containerEl)
-            .setName("Show ribbon icon")
-            .setDesc("Add an icon in the ribbon toolbar that opens the Broken Links panel. Changes require a reload to take effect.")
-            .addToggle((toggle) => {
-                // Set the value from the plugin settings
-                toggle.setValue(this.plugin.settings.showRibbonIcon);
-                // Set up onChange handler
-                toggle.onChange(async (value) => {
-                    // Update settings with new value
-                    this.plugin.settings.showRibbonIcon = value;
-                    // Save settings
-                    await this.plugin.saveSettings();
-                });
-            });
     }
 }
