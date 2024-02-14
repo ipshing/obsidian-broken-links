@@ -1,7 +1,7 @@
 {
     "id": "broken-links",
     "name": "Broken Links",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "minAppVersion": "1.0.0",
     "description": "Find broken links in your vault that don't connect to notes.",
     "author": "ipshing",

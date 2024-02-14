@@ -1,6 +1,6 @@
 {
     "name": "broken-links",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "description": "Find internal links that don't connect to notes.",
     "main": "main.js",
     "scripts": {
