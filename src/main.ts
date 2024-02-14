@@ -2,7 +2,6 @@ import { Plugin, WorkspaceLeaf } from "obsidian";
 import { BROKEN_LINKS_VIEW_TYPE, BrokenLinksView } from "./broken-links-view";
 
 interface BrokenLinksSettings {
-    showRibbonIcon: boolean;
     groupBy: "folder" | "file" | "link";
     expandButton: boolean;
     expandedFolderItems: string[];
@@ -14,7 +13,6 @@ interface BrokenLinksSettings {
 }
 
 const DEFAULT_SETTINGS: BrokenLinksSettings = {
-    showRibbonIcon: true,
     groupBy: "folder",
     expandButton: true,
     expandedFolderItems: [],
@@ -33,11 +31,9 @@ export default class BrokenLinks extends Plugin {
 
         this.registerView(BROKEN_LINKS_VIEW_TYPE, (leaf) => new BrokenLinksView(leaf, this));
 
-        if (this.settings.showRibbonIcon) {
-            this.addRibbonIcon("unlink", "View broken links", () => {
-                this.activateView();
-            });
-        }
+        this.addRibbonIcon("unlink", "View broken links", () => {
+            this.activateView();
+        });
 
         this.addCommand({
             id: "list",
