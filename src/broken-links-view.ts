@@ -1,4 +1,4 @@
-import { ItemView, Keymap, MarkdownPreviewView, MarkdownView, Menu, TFile, WorkspaceLeaf, getLinkpath } from "obsidian";
+import { ItemView, Keymap, MarkdownPreviewView, MarkdownView, Menu, TFile, WorkspaceLeaf, getLinkpath, stripHeading } from "obsidian";
 import BrokenLinks from "./main";
 import { FileModel, FolderModel, LinkModel } from "./models";
 import BrokenLinksTree from "./views/broken-links-tree.svelte";
@@ -106,7 +106,7 @@ export class BrokenLinksView extends ItemView {
                             const heading = link.link.slice(link.link.indexOf("#") + 1);
                             destIsMissing =
                                 targetCache.headings.find((value) => {
-                                    if (value.heading == heading || value.heading.replace(":", "") == heading) {
+                                    if (stripHeading(heading) == stripHeading(value.heading)) {
                                         return value;
                                     }
                                     return undefined;
