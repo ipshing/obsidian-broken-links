@@ -39,6 +39,10 @@ export class BrokenLinksView extends ItemView {
                 folderTree: links.byFolder,
                 fileTree: links.byFile,
                 linkTree: links.byLink,
+                filter: {
+                    filterString: this.plugin.settings.filterString,
+                    matchCase: this.plugin.settings.matchCase,
+                },
                 groupByButtonClicked: this.groupByButtonClickedHandler.bind(this),
                 sortButtonClicked: this.sortButtonClickedHandler.bind(this),
                 linkClicked: this.linkClickedHandler.bind(this),

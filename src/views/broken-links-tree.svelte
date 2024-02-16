@@ -21,7 +21,7 @@
     let children: HTMLElement;
     let expandLabel = plugin.settings.expandButton ? "Expand all" : "Collapse all";
     let expandIcon = plugin.settings.expandButton ? "chevrons-up-down" : "chevrons-down-up";
-    let filter = {
+    export let filter = {
         filterString: "",
         matchCase: false,
     };
@@ -74,6 +74,11 @@
         header.querySelectorAll(".clickable-icon").forEach((el) => setIcon(el as HTMLElement, el.getAttr("data-icon") ?? ""));
         container.querySelectorAll(".tree-item-icon").forEach((el) => setIcon(el as HTMLElement, el.getAttr("data-icon") ?? ""));
     }
+    async function saveFilter() {
+        plugin.settings.filterString = filter.filterString;
+        plugin.settings.matchCase = filter.matchCase;
+        await plugin.saveSettings();
+    }
 </script>
 
 <div class="nav-header" bind:this={header}>
@@ -91,14 +96,24 @@
     {#if groupBy == "link"}
         <div class="filter-row">
             <div class="filter-input-container">
-                <input type="search" spellcheck="false" placeholder="Filter..." bind:value={filter.filterString} />
-                <div class="filter-input-clear-button" aria-label="Clear filter" on:click={() => (filter.filterString = "")}></div>
+                <input type="search" spellcheck="false" placeholder="Filter..." bind:value={filter.filterString} on:change={saveFilter} />
+                <div
+                    class="filter-input-clear-button"
+                    aria-label="Clear filter"
+                    on:click={() => {
+                        filter.filterString = "";
+                        saveFilter();
+                    }}
+                ></div>
                 <div
                     class="input-right-decorator clickable-icon"
                     aria-label="Match case"
                     data-icon="uppercase-lowercase-a"
                     class:is-active={filter.matchCase}
-                    on:click={() => (filter.matchCase = !filter.matchCase)}
+                    on:click={() => {
+                        filter.matchCase = !filter.matchCase;
+                        saveFilter();
+                    }}
                 ></div>
             </div>
         </div>

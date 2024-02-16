@@ -10,6 +10,8 @@ interface BrokenLinksSettings {
     folderSort: "nameAsc" | "nameDesc";
     fileSort: "nameAsc" | "nameDesc" | "countAsc" | "countDesc";
     linkSort: "nameAsc" | "nameDesc" | "countAsc" | "countDesc";
+    filterString: string;
+    matchCase: boolean;
 }
 
 const DEFAULT_SETTINGS: BrokenLinksSettings = {
@@ -21,6 +23,8 @@ const DEFAULT_SETTINGS: BrokenLinksSettings = {
     folderSort: "nameAsc",
     fileSort: "countDesc",
     linkSort: "countDesc",
+    filterString: "",
+    matchCase: false,
 };
 
 export default class BrokenLinks extends Plugin {
