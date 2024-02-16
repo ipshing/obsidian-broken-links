@@ -21,6 +21,10 @@
     let children: HTMLElement;
     let expandLabel = plugin.settings.expandButton ? "Expand all" : "Collapse all";
     let expandIcon = plugin.settings.expandButton ? "chevrons-up-down" : "chevrons-down-up";
+    let filter = {
+        filterString: "",
+        matchCase: false,
+    };
 
     beforeUpdate(() => {
         expandLabel = plugin.settings.expandButton ? "Expand all" : "Collapse all";
@@ -84,6 +88,21 @@
         <!-- svelte-ignore a11y-no-static-element-interactions -->
         <div class="clickable-icon nav-action-button" aria-label={expandLabel} data-icon={expandIcon} on:click={toggleExpandButton}></div>
     </div>
+    {#if groupBy == "link"}
+        <div class="filter-row">
+            <div class="filter-input-container">
+                <input type="search" spellcheck="false" placeholder="Filter..." bind:value={filter.filterString} />
+                <div class="filter-input-clear-button" aria-label="Clear filter" on:click={() => (filter.filterString = "")}></div>
+                <div
+                    class="input-right-decorator clickable-icon"
+                    aria-label="Match case"
+                    data-icon="uppercase-lowercase-a"
+                    class:is-active={filter.matchCase}
+                    on:click={() => (filter.matchCase = !filter.matchCase)}
+                ></div>
+            </div>
+        </div>
+    {/if}
 </div>
 <div class="nav-files-container" bind:this={container}>
     <div class="tree-item nav-folder mod-root">
@@ -106,7 +125,9 @@
             {/if}
             {#if groupBy == "link"}
                 {#each linkTree as links}
-                    <Link {plugin} title={links[0].id} {links} {linkClicked} linkExpanded={childExpanded} />
+                    {#key filter}
+                        <Link {plugin} title={links[0].id} {links} {linkClicked} linkExpanded={childExpanded} {filter} />
+                    {/key}
                 {/each}
             {/if}
         </div>
