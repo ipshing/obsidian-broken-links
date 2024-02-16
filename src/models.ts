@@ -20,6 +20,7 @@ export interface FileModel {
 
 export interface LinkModel {
     id: string;
+    sortId: string;
     parent: FileModel;
     position: Pos;
 }

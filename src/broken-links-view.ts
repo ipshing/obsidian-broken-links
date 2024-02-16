@@ -117,6 +117,7 @@ export class BrokenLinksView extends ItemView {
                         // Create model
                         const linkModel: LinkModel = {
                             id: link.link,
+                            sortId: link.link.replace(/^#?\^?/, ""),
                             parent: fileModel,
                             position: link.position,
                         };
@@ -288,8 +289,8 @@ export class BrokenLinksView extends ItemView {
         const sorted = links.sort((a, b) => {
             let place = 0;
             if (this.plugin.settings.linkSort.startsWith("name")) {
-                if (a[0].id.toLocaleLowerCase() < b[0].id.toLocaleLowerCase()) place = -1;
-                else if (a[0].id.toLocaleLowerCase() > b[0].id.toLocaleLowerCase()) place = 1;
+                if (a[0].sortId.toLocaleLowerCase() < b[0].sortId.toLocaleLowerCase()) place = -1;
+                else if (a[0].sortId.toLocaleLowerCase() > b[0].sortId.toLocaleLowerCase()) place = 1;
                 if (this.plugin.settings.linkSort == "nameDesc") place *= -1;
             } else if (this.plugin.settings.linkSort.startsWith("count")) {
                 if (a.length < b.length) place = -1;
