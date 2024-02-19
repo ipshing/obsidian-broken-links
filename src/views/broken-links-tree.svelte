@@ -14,6 +14,7 @@
     export let linkTree: LinkModel[][];
     export let groupByButtonClicked: (e: MouseEvent) => void;
     export let sortButtonClicked: (e: MouseEvent) => void;
+    export let folderContextClicked: (e: MouseEvent, el: HTMLElement) => void;
     export let linkClicked: (e: MouseEvent, link: LinkModel) => void;
 
     let header: HTMLElement;
@@ -69,6 +70,7 @@
     async function childExpanded() {
         // Change to collapse
         plugin.settings.expandButton = false;
+        await plugin.saveSettings();
     }
     function setIcons() {
         header.querySelectorAll(".clickable-icon").forEach((el) => setIcon(el as HTMLElement, el.getAttr("data-icon") ?? ""));
@@ -127,7 +129,7 @@
         <div class="tree-item-children nav-folder-children" bind:this={children}>
             {#if groupBy == "folder"}
                 {#each folderTree.folders as folder}
-                    <Folder {plugin} {folder} {linkClicked} folderExpanded={childExpanded} fileExpanded={childExpanded} />
+                    <Folder {plugin} {folder} {linkClicked} folderExpanded={childExpanded} fileExpanded={childExpanded} {folderContextClicked} />
                 {/each}
                 {#each folderTree.files as file}
                     <File {plugin} {file} {linkClicked} fileExpanded={childExpanded} />

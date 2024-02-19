@@ -7,6 +7,11 @@ export const BROKEN_LINKS_VIEW_TYPE = "broken-links-view";
 
 export class BrokenLinksView extends ItemView {
     plugin: BrokenLinks;
+    brokenLinks: {
+        byFolder: FolderModel;
+        byFile: FileModel[];
+        byLink: LinkModel[][];
+    };
     brokenLinksTree: BrokenLinksTree;
 
     constructor(leaf: WorkspaceLeaf, plugin: BrokenLinks) {
@@ -25,7 +30,7 @@ export class BrokenLinksView extends ItemView {
     }
 
     async onOpen() {
-        const links = await this.getBrokenLinks();
+        this.brokenLinks = await this.getBrokenLinks();
 
         this.containerEl.empty();
 
@@ -36,15 +41,16 @@ export class BrokenLinksView extends ItemView {
             props: {
                 plugin: this.plugin,
                 groupBy: this.plugin.settings.groupBy,
-                folderTree: links.byFolder,
-                fileTree: links.byFile,
-                linkTree: links.byLink,
+                folderTree: this.brokenLinks.byFolder,
+                fileTree: this.brokenLinks.byFile,
+                linkTree: this.brokenLinks.byLink,
                 filter: {
                     filterString: this.plugin.settings.filterString,
                     matchCase: this.plugin.settings.matchCase,
                 },
                 groupByButtonClicked: this.groupByButtonClickedHandler.bind(this),
                 sortButtonClicked: this.sortButtonClickedHandler.bind(this),
+                folderContextClicked: this.folderContextClickedHandler.bind(this),
                 linkClicked: this.linkClickedHandler.bind(this),
             },
         });
@@ -57,12 +63,12 @@ export class BrokenLinksView extends ItemView {
         this.brokenLinksTree.$destroy();
     }
 
-    async updateView() {
-        const links = await this.getBrokenLinks();
+    async updateView(reloadLinks = true) {
+        if (reloadLinks) this.brokenLinks = await this.getBrokenLinks();
         this.brokenLinksTree.$set({
-            folderTree: links.byFolder,
-            fileTree: links.byFile,
-            linkTree: links.byLink,
+            folderTree: this.brokenLinks.byFolder,
+            fileTree: this.brokenLinks.byFile,
+            linkTree: this.brokenLinks.byLink,
         });
     }
 
@@ -527,6 +533,75 @@ export class BrokenLinksView extends ItemView {
                     })
             );
             menu.showAtMouseEvent(e);
+        }
+    }
+
+    async folderContextClickedHandler(e: MouseEvent, el: HTMLElement) {
+        const menu = new Menu();
+        menu.addItem((item) => {
+            item.setTitle("Expand all children")
+                .setIcon("chevrons-up-down")
+                .onClick(async () => {
+                    const folder = this.getFolderFromElement(el);
+                    if (folder) {
+                        // Expand folder and all children
+                        this.toggleExpand(folder, true);
+                        // Save settings
+                        await this.plugin.saveSettings();
+                        // Update broken links tree
+                        await this.updateView(false);
+                    }
+                });
+        });
+        menu.addItem((item) => {
+            item.setTitle("Collapse all children")
+                .setIcon("chevrons-down-up")
+                .onClick(async () => {
+                    const folder = this.getFolderFromElement(el);
+                    if (folder) {
+                        // Collapse folder and all children
+                        this.toggleExpand(folder, false);
+                        // Save settings
+                        await this.plugin.saveSettings();
+                        // Update broken links tree
+                        await this.updateView(false);
+                    }
+                });
+        });
+        menu.showAtMouseEvent(e);
+    }
+
+    getFolderFromElement(el: HTMLElement): FolderModel | undefined {
+        // Get folder path
+        const path = el.getAttr("data-path") ?? "";
+        // Split into parts
+        const parts = path.split("/");
+        // Dive into model until the bottom folder is found
+        let folder = this.brokenLinks.byFolder.folders.find((f) => f.name == parts[0]);
+        for (let i = 1; i < parts.length; i++) {
+            if (folder) {
+                folder = folder.folders.find((f) => f.name == parts[i]);
+            }
+        }
+        return folder;
+    }
+
+    toggleExpand(folder: FolderModel, expand: boolean) {
+        if (expand) {
+            this.plugin.settings.expandedFolderItems.push(folder.path);
+        } else {
+            this.plugin.settings.expandedFolderItems.remove(folder.path);
+        }
+        for (const file of folder.files) {
+            if (expand) {
+                this.plugin.settings.expandedFolderItems.push(file.path);
+            } else {
+                this.plugin.settings.expandedFolderItems.remove(file.path);
+            }
+        }
+        // Recurse for subfolders
+        for (const subfolder of folder.folders) {
+            this.toggleExpand(subfolder, expand);
         }
     }
 
