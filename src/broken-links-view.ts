@@ -86,7 +86,7 @@ export class BrokenLinksView extends ItemView {
             // Check ignored folder list
             if (
                 this.plugin.settings.ignoredFolders.find((folder) => {
-                    return file.parent && file.parent.path.startsWith(folder);
+                    return (file.parent && file.parent.path == "/" && folder == "/") || file.path.startsWith(folder + "/");
                 })
             ) {
                 continue;
