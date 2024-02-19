@@ -21,6 +21,10 @@
     let children: HTMLElement;
     let expandLabel = plugin.settings.expandButton ? "Expand all" : "Collapse all";
     let expandIcon = plugin.settings.expandButton ? "chevrons-up-down" : "chevrons-down-up";
+    export let filter = {
+        filterString: "",
+        matchCase: false,
+    };
 
     beforeUpdate(() => {
         expandLabel = plugin.settings.expandButton ? "Expand all" : "Collapse all";
@@ -70,6 +74,11 @@
         header.querySelectorAll(".clickable-icon").forEach((el) => setIcon(el as HTMLElement, el.getAttr("data-icon") ?? ""));
         container.querySelectorAll(".tree-item-icon").forEach((el) => setIcon(el as HTMLElement, el.getAttr("data-icon") ?? ""));
     }
+    async function saveFilter() {
+        plugin.settings.filterString = filter.filterString;
+        plugin.settings.matchCase = filter.matchCase;
+        await plugin.saveSettings();
+    }
 </script>
 
 <div class="nav-header" bind:this={header}>
@@ -84,6 +93,31 @@
         <!-- svelte-ignore a11y-no-static-element-interactions -->
         <div class="clickable-icon nav-action-button" aria-label={expandLabel} data-icon={expandIcon} on:click={toggleExpandButton}></div>
     </div>
+    {#if groupBy == "link"}
+        <div class="filter-row">
+            <div class="filter-input-container">
+                <input type="search" spellcheck="false" placeholder="Filter..." bind:value={filter.filterString} on:change={saveFilter} />
+                <div
+                    class="filter-input-clear-button"
+                    aria-label="Clear filter"
+                    on:click={() => {
+                        filter.filterString = "";
+                        saveFilter();
+                    }}
+                ></div>
+                <div
+                    class="input-right-decorator clickable-icon"
+                    aria-label="Match case"
+                    data-icon="uppercase-lowercase-a"
+                    class:is-active={filter.matchCase}
+                    on:click={() => {
+                        filter.matchCase = !filter.matchCase;
+                        saveFilter();
+                    }}
+                ></div>
+            </div>
+        </div>
+    {/if}
 </div>
 <div class="nav-files-container" bind:this={container}>
     <div class="tree-item nav-folder mod-root">
@@ -106,7 +140,9 @@
             {/if}
             {#if groupBy == "link"}
                 {#each linkTree as links}
-                    <Link {plugin} title={links[0].id} {links} {linkClicked} linkExpanded={childExpanded} />
+                    {#key filter}
+                        <Link {plugin} title={links[0].id} {links} {linkClicked} linkExpanded={childExpanded} {filter} />
+                    {/key}
                 {/each}
             {/if}
         </div>

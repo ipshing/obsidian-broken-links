@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { link } from "fs";
     import BrokenLinks from "src/main";
     import { LinkModel } from "src/models";
     import { afterUpdate } from "svelte";
@@ -7,6 +6,10 @@
     export let plugin: BrokenLinks;
     export let title: string;
     export let links: LinkModel[];
+    export let filter = {
+        filterString: "",
+        matchCase: false,
+    };
     export let linkClicked: (e: MouseEvent, link: LinkModel) => void;
     export let linkExpanded: () => void;
 
@@ -25,9 +28,26 @@
         }
         await plugin.saveSettings();
     }
+    function shouldShow() {
+        let showLink = true;
+        // get the filter string as an array of each "word"
+        const words = filter.filterString.split(" ").filter((s) => s);
+        for (const word of words) {
+            if (filter.matchCase) {
+                if (!title.contains(word)) {
+                    showLink = false;
+                }
+            } else {
+                if (!title.toLocaleLowerCase().contains(word.toLocaleLowerCase())) {
+                    showLink = false;
+                }
+            }
+        }
+        return showLink;
+    }
 </script>
 
-<div id={title} class="tree-item nav-link-group">
+<div id={title} class="tree-item nav-link-group" class:hidden={!shouldShow()}>
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div class="tree-item-self is-clickable nav-file-title" on:click={toggleExpand}>
