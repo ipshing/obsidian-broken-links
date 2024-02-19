@@ -83,6 +83,15 @@ export class BrokenLinksView extends ItemView {
 
         // Iterate all the files in the vault
         for (const file of this.plugin.app.vault.getMarkdownFiles()) {
+            // Check ignored folder list
+            if (
+                this.plugin.settings.ignoredFolders.find((folder) => {
+                    return file.parent && file.parent.path.startsWith(folder);
+                })
+            ) {
+                continue;
+            }
+
             // Use the cache to get determine if there are links in the file
             const fileCache = this.plugin.app.metadataCache.getFileCache(file);
             if (fileCache?.links) {

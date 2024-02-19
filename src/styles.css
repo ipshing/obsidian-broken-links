@@ -1,3 +1,17 @@
+.broken-links-settings .setting-item-control input {
+    min-width: 250px;
+}
+.broken-links-settings-folder {
+    display: flex;
+    align-items: center;
+    justify-items: left;
+    gap: 5px;
+    padding: var(--size-4-1) 0;
+}
+.broken-links-settings-folder-icon {
+    margin-top: var(--size-4-1);
+}
+
 div.broken-links .hidden {
     display: none;
 }
