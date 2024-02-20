@@ -650,13 +650,6 @@ export class BrokenLinksView extends ItemView {
                             });
                         });
                     } else {
-                        leaf.view.editor.scrollIntoView(
-                            {
-                                from: { line: link.position.start.line, ch: link.position.start.col },
-                                to: { line: link.position.end.line, ch: link.position.end.col },
-                            },
-                            true
-                        );
                         leaf.view.editor.setSelection(
                             {
                                 line: link.position.start.line,
@@ -666,6 +659,13 @@ export class BrokenLinksView extends ItemView {
                                 line: link.position.end.line,
                                 ch: link.position.end.col,
                             }
+                        );
+                        leaf.view.editor.scrollIntoView(
+                            {
+                                from: { line: link.position.start.line, ch: link.position.start.col },
+                                to: { line: link.position.end.line, ch: link.position.end.col },
+                            },
+                            true
                         );
                     }
                 }
