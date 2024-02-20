@@ -1,10 +1,10 @@
 <script lang="ts">
     import { setIcon } from "obsidian";
-    import { FileModel, FolderModel, LinkModel, LinkModelGroup } from "src/models";
+    import { FileModel, FolderModel, LinkFilter, LinkModel, LinkModelGroup } from "src/models";
     import { afterUpdate, beforeUpdate } from "svelte";
     import Folder from "./tree-item-folder.svelte";
     import File from "./tree-item-file.svelte";
-    import Link from "./tree-item-link.svelte";
+    import LinkGroup from "./tree-item-link-group.svelte";
     import BrokenLinks from "src/main";
 
     export let plugin: BrokenLinks;
@@ -12,8 +12,13 @@
     export let folderTree: FolderModel;
     export let fileTree: FileModel[];
     export let linkTree: LinkModelGroup[];
+    export let linkFilter: LinkFilter = {
+        filterString: "",
+        matchCase: false,
+    };
     export let groupByButtonClicked: (e: MouseEvent) => void;
     export let sortButtonClicked: (e: MouseEvent) => void;
+    export let updateLinkFilter: (filterString: string, matchCase: boolean) => void;
     export let folderContextClicked: (e: MouseEvent, el: HTMLElement) => void;
     export let linkClicked: (e: MouseEvent, link: LinkModel) => void;
 
@@ -22,10 +27,6 @@
     let children: HTMLElement;
     let expandLabel = plugin.settings.expandButton ? "Expand all" : "Collapse all";
     let expandIcon = plugin.settings.expandButton ? "chevrons-up-down" : "chevrons-down-up";
-    export let filter = {
-        filterString: "",
-        matchCase: false,
-    };
 
     beforeUpdate(() => {
         expandLabel = plugin.settings.expandButton ? "Expand all" : "Collapse all";
@@ -76,11 +77,6 @@
         header.querySelectorAll(".clickable-icon").forEach((el) => setIcon(el as HTMLElement, el.getAttr("data-icon") ?? ""));
         container.querySelectorAll(".tree-item-icon").forEach((el) => setIcon(el as HTMLElement, el.getAttr("data-icon") ?? ""));
     }
-    async function saveFilter() {
-        plugin.settings.filterString = filter.filterString;
-        plugin.settings.matchCase = filter.matchCase;
-        await plugin.saveSettings();
-    }
 </script>
 
 <div class="nav-header" bind:this={header}>
@@ -98,23 +94,33 @@
     {#if groupBy == "link"}
         <div class="filter-row">
             <div class="filter-input-container">
-                <input type="search" spellcheck="false" placeholder="Filter..." bind:value={filter.filterString} on:change={saveFilter} />
+                <input
+                    type="search"
+                    spellcheck="false"
+                    placeholder="Filter..."
+                    bind:value={linkFilter.filterString}
+                    on:input={() => updateLinkFilter(linkFilter.filterString, linkFilter.matchCase)}
+                />
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <!-- svelte-ignore a11y-no-static-element-interactions -->
                 <div
                     class="filter-input-clear-button"
                     aria-label="Clear filter"
                     on:click={() => {
-                        filter.filterString = "";
-                        saveFilter();
+                        linkFilter.filterString = "";
+                        updateLinkFilter(linkFilter.filterString, linkFilter.matchCase);
                     }}
                 ></div>
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <!-- svelte-ignore a11y-no-static-element-interactions -->
                 <div
                     class="input-right-decorator clickable-icon"
                     aria-label="Match case"
                     data-icon="uppercase-lowercase-a"
-                    class:is-active={filter.matchCase}
+                    class:is-active={linkFilter.matchCase}
                     on:click={() => {
-                        filter.matchCase = !filter.matchCase;
-                        saveFilter();
+                        linkFilter.matchCase = !linkFilter.matchCase;
+                        updateLinkFilter(linkFilter.filterString, linkFilter.matchCase);
                     }}
                 ></div>
             </div>
@@ -141,10 +147,8 @@
                 {/each}
             {/if}
             {#if groupBy == "link"}
-                {#each linkTree as link}
-                    {#key filter}
-                        <Link {plugin} title={link.id} links={link.links} {linkClicked} linkExpanded={childExpanded} {filter} />
-                    {/key}
+                {#each linkTree as group}
+                    <LinkGroup {plugin} linkGroup={group} {linkClicked} linkExpanded={childExpanded} />
                 {/each}
             {/if}
         </div>

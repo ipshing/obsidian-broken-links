@@ -1,6 +1,7 @@
 import { Plugin, WorkspaceLeaf } from "obsidian";
 import { BROKEN_LINKS_VIEW_TYPE, BrokenLinksView } from "./broken-links-view";
 import { BrokenLinksSettingsTab } from "./settings";
+import { LinkFilter } from "./models";
 
 interface BrokenLinksSettings {
     groupBy: "folder" | "file" | "link";
@@ -11,8 +12,7 @@ interface BrokenLinksSettings {
     folderSort: "nameAsc" | "nameDesc";
     fileSort: "nameAsc" | "nameDesc" | "countAsc" | "countDesc";
     linkSort: "nameAsc" | "nameDesc" | "countAsc" | "countDesc";
-    filterString: string;
-    matchCase: boolean;
+    linkFilter: LinkFilter;
     ignoredFolders: string[];
 }
 
@@ -25,8 +25,10 @@ const DEFAULT_SETTINGS: BrokenLinksSettings = {
     folderSort: "nameAsc",
     fileSort: "countDesc",
     linkSort: "countDesc",
-    filterString: "",
-    matchCase: false,
+    linkFilter: {
+        filterString: "",
+        matchCase: false,
+    },
     ignoredFolders: [],
 };
 

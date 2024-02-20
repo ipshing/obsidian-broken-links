@@ -20,6 +20,7 @@ export interface FileModel {
 
 export interface LinkModelGroup {
     id: string;
+    show: boolean;
     links: LinkModel[];
 }
 
@@ -28,4 +29,9 @@ export interface LinkModel {
     sortId: string;
     parent: FileModel;
     position: Pos;
+}
+
+export interface LinkFilter {
+    filterString: string;
+    matchCase: boolean;
 }

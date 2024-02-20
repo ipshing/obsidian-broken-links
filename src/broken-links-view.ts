@@ -44,12 +44,10 @@ export class BrokenLinksView extends ItemView {
                 folderTree: this.brokenLinks.byFolder,
                 fileTree: this.brokenLinks.byFile,
                 linkTree: this.brokenLinks.byLink,
-                filter: {
-                    filterString: this.plugin.settings.filterString,
-                    matchCase: this.plugin.settings.matchCase,
-                },
+                linkFilter: this.plugin.settings.linkFilter,
                 groupByButtonClicked: this.groupByButtonClickedHandler.bind(this),
                 sortButtonClicked: this.sortButtonClickedHandler.bind(this),
+                updateLinkFilter: this.updateLinkFilterHandler.bind(this),
                 folderContextClicked: this.folderContextClickedHandler.bind(this),
                 linkClicked: this.linkClickedHandler.bind(this),
             },
@@ -149,6 +147,7 @@ export class BrokenLinksView extends ItemView {
                         if (!group) {
                             group = {
                                 id: linkModel.sortId,
+                                show: true,
                                 links: [],
                             };
                             byLink.push(group);
@@ -232,8 +231,9 @@ export class BrokenLinksView extends ItemView {
         this.sortFolderTree(byFolder);
         // Sort file tree
         byFile = this.sortFileTree(byFile);
-        // Sort link tree
+        // Sort link tree & filter
         byLink = this.sortLinkTree(byLink);
+        this.filterLinkTree(byLink);
 
         return {
             byFolder,
@@ -303,9 +303,9 @@ export class BrokenLinksView extends ItemView {
         return sorted;
     }
 
-    sortLinkTree(links: LinkModelGroup[]): LinkModelGroup[] {
+    sortLinkTree(linkGroups: LinkModelGroup[]): LinkModelGroup[] {
         // Sort links according to settings
-        const sorted = links.sort((a, b) => {
+        const sorted = linkGroups.sort((a, b) => {
             let place = 0;
             if (this.plugin.settings.linkSort.startsWith("name")) {
                 if (a.id.toLocaleLowerCase() < b.id.toLocaleLowerCase()) place = -1;
@@ -332,6 +332,25 @@ export class BrokenLinksView extends ItemView {
             });
         }
         return sorted;
+    }
+
+    filterLinkTree(linkGroups: LinkModelGroup[]) {
+        for (const group of linkGroups) {
+            group.show = true;
+            // get the filter string as an array of each "word"
+            const words = this.plugin.settings.linkFilter.filterString.split(" ").filter((s) => s);
+            for (const word of words) {
+                if (this.plugin.settings.linkFilter.matchCase) {
+                    if (!group.id.contains(word)) {
+                        group.show = false;
+                    }
+                } else {
+                    if (!group.id.toLocaleLowerCase().contains(word.toLocaleLowerCase())) {
+                        group.show = false;
+                    }
+                }
+            }
+        }
     }
 
     groupByButtonClickedHandler(e: MouseEvent) {
@@ -532,6 +551,14 @@ export class BrokenLinksView extends ItemView {
             );
             menu.showAtMouseEvent(e);
         }
+    }
+
+    async updateLinkFilterHandler(filterString: string, matchCase: boolean) {
+        this.plugin.settings.linkFilter.filterString = filterString;
+        this.plugin.settings.linkFilter.matchCase = matchCase;
+        await this.plugin.saveSettings();
+        this.filterLinkTree(this.brokenLinks.byLink);
+        this.updateView(false);
     }
 
     async folderContextClickedHandler(e: MouseEvent, el: HTMLElement) {

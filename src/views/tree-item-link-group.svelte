@@ -1,65 +1,43 @@
 <script lang="ts">
     import BrokenLinks from "src/main";
-    import { LinkModel } from "src/models";
+    import { LinkModel, LinkModelGroup } from "src/models";
     import { afterUpdate } from "svelte";
 
     export let plugin: BrokenLinks;
-    export let title: string;
-    export let links: LinkModel[];
-    export let filter = {
-        filterString: "",
-        matchCase: false,
-    };
+    export let linkGroup: LinkModelGroup;
     export let linkClicked: (e: MouseEvent, link: LinkModel) => void;
     export let linkExpanded: () => void;
 
-    let isCollapsed: boolean = !plugin.settings.expandedLinkItems.contains(title);
+    let isCollapsed: boolean = !plugin.settings.expandedLinkItems.contains(linkGroup.id);
 
     afterUpdate(() => {
-        isCollapsed = !plugin.settings.expandedLinkItems.contains(title);
+        isCollapsed = !plugin.settings.expandedLinkItems.contains(linkGroup.id);
     });
     async function toggleExpand() {
         isCollapsed = !isCollapsed;
         if (isCollapsed) {
-            plugin.settings.expandedLinkItems.remove(title);
+            plugin.settings.expandedLinkItems.remove(linkGroup.id);
         } else {
-            plugin.settings.expandedLinkItems.push(title);
+            plugin.settings.expandedLinkItems.push(linkGroup.id);
             linkExpanded();
         }
         await plugin.saveSettings();
     }
-    function shouldShow() {
-        let showLink = true;
-        // get the filter string as an array of each "word"
-        const words = filter.filterString.split(" ").filter((s) => s);
-        for (const word of words) {
-            if (filter.matchCase) {
-                if (!title.contains(word)) {
-                    showLink = false;
-                }
-            } else {
-                if (!title.toLocaleLowerCase().contains(word.toLocaleLowerCase())) {
-                    showLink = false;
-                }
-            }
-        }
-        return showLink;
-    }
 </script>
 
-<div id={title} class="tree-item nav-link-group" class:hidden={!shouldShow()}>
+<div id={linkGroup.id} class="tree-item nav-link-group" class:hidden={!linkGroup.show}>
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div class="tree-item-self is-clickable nav-file-title" on:click={toggleExpand}>
         <div class="tree-item-icon collapse-icon nav-folder-collapse-indicator" class:is-collapsed={isCollapsed} data-icon="right-triangle"></div>
         <div class="tree-item-icon" data-icon="lucide-link"></div>
-        <div class="tree-item-inner nav-file-title-content">{title}</div>
+        <div class="tree-item-inner nav-file-title-content">{linkGroup.id}</div>
         <div class="tree-item-flair-outer nav-file-link-count">
-            <span class="tree-item-flair">{links.length}</span>
+            <span class="tree-item-flair">{linkGroup.links.length}</span>
         </div>
     </div>
     <div class="tree-item-children nav-link-children" class:hidden={isCollapsed}>
-        {#each links as link}
+        {#each linkGroup.links as link}
             <div class="tree-item nav-link">
                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                 <!-- svelte-ignore a11y-no-static-element-interactions -->
