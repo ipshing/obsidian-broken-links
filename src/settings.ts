@@ -16,7 +16,26 @@ export class BrokenLinksSettingsTab extends PluginSettingTab {
         containerEl.empty();
         containerEl.addClass("broken-links-settings");
 
+        this.addLinkSeparationSetting();
         this.addIgnoreFoldersSetting();
+    }
+
+    addLinkSeparationSetting() {
+        const { containerEl } = this;
+        new Setting(containerEl)
+            .setName("Consolidate links")
+            .setDesc("Links to the same file/heading but with different display names will be grouped together in the link view, resulting in a shorter list.")
+            .addToggle((toggle) => {
+                toggle.setValue(this.plugin.settings.consolidateLinks).onChange(async (value) => {
+                    // Update settings
+                    this.plugin.settings.consolidateLinks = value;
+                    await this.plugin.saveSettings();
+                    // Force refresh of broken links panel
+                    await this.plugin.updateView();
+                    // Refresh settings view
+                    this.display();
+                });
+            });
     }
 
     addIgnoreFoldersSetting() {
@@ -24,7 +43,7 @@ export class BrokenLinksSettingsTab extends PluginSettingTab {
         let search: SearchComponent;
 
         new Setting(containerEl)
-            .setName("Ignore Folders")
+            .setName("Ignore folders")
             .setDesc("Folders (and their subfolders) listed here will not be searched for broken links.")
             .addSearch((comp) => {
                 search = comp;

@@ -14,6 +14,7 @@ interface BrokenLinksSettings {
     linkSort: "nameAsc" | "nameDesc" | "countAsc" | "countDesc";
     linkFilter: LinkFilter;
     ignoredFolders: string[];
+    consolidateLinks: boolean;
 }
 
 const DEFAULT_SETTINGS: BrokenLinksSettings = {
@@ -30,6 +31,7 @@ const DEFAULT_SETTINGS: BrokenLinksSettings = {
         matchCase: false,
     },
     ignoredFolders: [],
+    consolidateLinks: false,
 };
 
 export default class BrokenLinks extends Plugin {

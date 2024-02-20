@@ -140,6 +140,9 @@ export class BrokenLinksView extends ItemView {
                             parent: fileModel,
                             position: link.position,
                         };
+                        if (!this.plugin.settings.consolidateLinks && link.displayText && link.displayText != link.link) {
+                            linkModel.sortId += `|${link.displayText}`;
+                        }
                         // Add the link to the file
                         fileModel.links.push(linkModel);
                         // Add to byLink list
