@@ -121,13 +121,13 @@ export class BrokenLinksView extends ItemView {
                     if (dest != null && link.link.contains("#")) {
                         const targetCache = this.plugin.app.metadataCache.getFileCache(dest);
                         if (link.link.contains("^") && targetCache?.blocks) {
-                            const block = link.link.slice(link.link.indexOf("^") + 1);
+                            const block = link.link.slice(link.link.indexOf("^") + 1).toLocaleLowerCase();
                             destIsMissing = targetCache.blocks[block] == undefined;
                         } else if (targetCache?.headings) {
                             const heading = link.link.slice(link.link.indexOf("#") + 1);
                             destIsMissing =
                                 targetCache.headings.find((value) => {
-                                    if (stripHeading(heading) == stripHeading(value.heading)) {
+                                    if (stripHeading(heading).toLocaleLowerCase() == stripHeading(value.heading).toLocaleLowerCase()) {
                                         return value;
                                     }
                                     return undefined;
