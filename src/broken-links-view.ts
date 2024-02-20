@@ -23,7 +23,7 @@ export class BrokenLinksView extends ItemView {
         return BROKEN_LINKS_VIEW_TYPE;
     }
     getDisplayText(): string {
-        return "Broken links list";
+        return "Broken links";
     }
     getIcon(): string {
         return "unlink";

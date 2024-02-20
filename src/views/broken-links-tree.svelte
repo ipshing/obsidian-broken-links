@@ -129,9 +129,6 @@
 </div>
 <div class="nav-files-container" bind:this={container}>
     <div class="tree-item nav-folder mod-root">
-        <div class="tree-item-self nav-folder-title">
-            <div class="tree-item-inner nav-folder-title-content">Broken Links</div>
-        </div>
         <div class="tree-item-children nav-folder-children" bind:this={children}>
             {#if groupBy == "folder"}
                 {#each folderTree.folders as folder}
