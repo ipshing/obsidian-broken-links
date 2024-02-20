@@ -546,6 +546,8 @@ export class BrokenLinksView extends ItemView {
                     if (folder) {
                         // Expand folder and all children
                         this.toggleExpand(folder, true);
+                        // Set expand button to collapse
+                        this.plugin.settings.expandButton = false;
                         // Save settings
                         await this.plugin.saveSettings();
                         // Update broken links tree
