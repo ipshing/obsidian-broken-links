@@ -1,6 +1,6 @@
 import { ItemView, Keymap, MarkdownPreviewView, MarkdownView, Menu, TFile, WorkspaceLeaf, getLinkpath, stripHeading } from "obsidian";
 import BrokenLinks from "./main";
-import { FileModel, FolderModel, LinkModel } from "./models";
+import { FileModel, FolderModel, LinkModel, LinkModelGroup } from "./models";
 import BrokenLinksTree from "./views/broken-links-tree.svelte";
 
 export const BROKEN_LINKS_VIEW_TYPE = "broken-links-view";
@@ -10,7 +10,7 @@ export class BrokenLinksView extends ItemView {
     brokenLinks: {
         byFolder: FolderModel;
         byFile: FileModel[];
-        byLink: LinkModel[][];
+        byLink: LinkModelGroup[];
     };
     brokenLinksTree: BrokenLinksTree;
 
@@ -75,7 +75,7 @@ export class BrokenLinksView extends ItemView {
     async getBrokenLinks(): Promise<{
         byFolder: FolderModel;
         byFile: FileModel[];
-        byLink: LinkModel[][];
+        byLink: LinkModelGroup[];
     }> {
         const byFolder: FolderModel = {
             name: "root",
@@ -85,7 +85,7 @@ export class BrokenLinksView extends ItemView {
             linkCount: 0,
         };
         let byFile: FileModel[] = [];
-        let byLink: LinkModel[][] = new Array<LinkModel[]>();
+        let byLink: LinkModelGroup[] = [];
 
         // Iterate all the files in the vault
         for (const file of this.plugin.app.vault.getMarkdownFiles()) {
@@ -145,17 +145,15 @@ export class BrokenLinksView extends ItemView {
                         // Add the link to the file
                         fileModel.links.push(linkModel);
                         // Add to byLink list
-                        let linkList: LinkModel[] | null =
-                            byLink.find((arr) => {
-                                if (arr.length > 0 && arr[0].id == linkModel.id) {
-                                    return arr;
-                                }
-                            }) ?? null;
-                        if (linkList == null) {
-                            linkList = [];
-                            byLink.push(linkList);
+                        let group = byLink.find((g) => g.id == linkModel.sortId);
+                        if (!group) {
+                            group = {
+                                id: linkModel.sortId,
+                                links: [],
+                            };
+                            byLink.push(group);
                         }
-                        linkList.push(linkModel);
+                        group.links.push(linkModel);
                     }
                 }
 
@@ -305,29 +303,29 @@ export class BrokenLinksView extends ItemView {
         return sorted;
     }
 
-    sortLinkTree(links: LinkModel[][]): LinkModel[][] {
+    sortLinkTree(links: LinkModelGroup[]): LinkModelGroup[] {
         // Sort links according to settings
         const sorted = links.sort((a, b) => {
             let place = 0;
             if (this.plugin.settings.linkSort.startsWith("name")) {
-                if (a[0].sortId.toLocaleLowerCase() < b[0].sortId.toLocaleLowerCase()) place = -1;
-                else if (a[0].sortId.toLocaleLowerCase() > b[0].sortId.toLocaleLowerCase()) place = 1;
+                if (a.id.toLocaleLowerCase() < b.id.toLocaleLowerCase()) place = -1;
+                else if (a.id.toLocaleLowerCase() > b.id.toLocaleLowerCase()) place = 1;
                 if (this.plugin.settings.linkSort == "nameDesc") place *= -1;
             } else if (this.plugin.settings.linkSort.startsWith("count")) {
-                if (a.length < b.length) place = -1;
-                else if (a.length > b.length) place = 1;
+                if (a.links.length < b.links.length) place = -1;
+                else if (a.links.length > b.links.length) place = 1;
                 if (this.plugin.settings.linkSort == "countDesc") place *= -1;
                 // For same link count, default to A to Z
-                if (a.length == b.length) {
-                    if (a[0].id.toLocaleLowerCase() < b[0].id.toLocaleLowerCase()) place = -1;
-                    else if (a[0].id.toLocaleLowerCase() > b[0].id.toLocaleLowerCase()) place = 1;
+                if (a.links.length == b.links.length) {
+                    if (a.id.toLocaleLowerCase() < b.id.toLocaleLowerCase()) place = -1;
+                    else if (a.id.toLocaleLowerCase() > b.id.toLocaleLowerCase()) place = 1;
                 }
             }
             return place;
         });
         // Sort files A to Z
         for (let i = 0; i < sorted.length; i++) {
-            sorted[i] = sorted[i].sort((a, b) => {
+            sorted[i].links = sorted[i].links.sort((a, b) => {
                 if (a.parent.name.toLocaleLowerCase() < b.parent.name.toLocaleLowerCase()) return -1;
                 if (a.parent.name.toLocaleLowerCase() > b.parent.name.toLocaleLowerCase()) return 1;
                 else return 0;

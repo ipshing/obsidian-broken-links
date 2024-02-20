@@ -18,6 +18,11 @@ export interface FileModel {
     links: LinkModel[];
 }
 
+export interface LinkModelGroup {
+    id: string;
+    links: LinkModel[];
+}
+
 export interface LinkModel {
     id: string;
     sortId: string;

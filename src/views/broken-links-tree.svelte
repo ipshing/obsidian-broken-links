@@ -1,6 +1,6 @@
 <script lang="ts">
     import { setIcon } from "obsidian";
-    import { FileModel, FolderModel, LinkModel } from "src/models";
+    import { FileModel, FolderModel, LinkModel, LinkModelGroup } from "src/models";
     import { afterUpdate, beforeUpdate } from "svelte";
     import Folder from "./tree-item-folder.svelte";
     import File from "./tree-item-file.svelte";
@@ -11,7 +11,7 @@
     export let groupBy: "folder" | "file" | "link";
     export let folderTree: FolderModel;
     export let fileTree: FileModel[];
-    export let linkTree: LinkModel[][];
+    export let linkTree: LinkModelGroup[];
     export let groupByButtonClicked: (e: MouseEvent) => void;
     export let sortButtonClicked: (e: MouseEvent) => void;
     export let folderContextClicked: (e: MouseEvent, el: HTMLElement) => void;
@@ -141,9 +141,9 @@
                 {/each}
             {/if}
             {#if groupBy == "link"}
-                {#each linkTree as links}
+                {#each linkTree as link}
                     {#key filter}
-                        <Link {plugin} title={links[0].id} {links} {linkClicked} linkExpanded={childExpanded} {filter} />
+                        <Link {plugin} title={link.id} links={link.links} {linkClicked} linkExpanded={childExpanded} {filter} />
                     {/key}
                 {/each}
             {/if}
