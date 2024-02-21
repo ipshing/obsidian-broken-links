@@ -3,6 +3,7 @@ import { BROKEN_LINKS_VIEW_TYPE, BrokenLinksView } from "./broken-links-view";
 import { BrokenLinksSettingsTab } from "./settings";
 import { LinkFilter } from "./models";
 import { FileSort, FolderSort, LinkGrouping, LinkSort } from "./enum";
+import { lt, valid } from "semver";
 
 interface BrokenLinksSettings {
     version: string;
@@ -42,6 +43,7 @@ export default class BrokenLinks extends Plugin {
 
     async onload() {
         await this.loadSettings();
+        await this.runSettingsVersionCheck();
 
         this.registerView(BROKEN_LINKS_VIEW_TYPE, (leaf) => new BrokenLinksView(leaf, this));
 
@@ -99,5 +101,70 @@ export default class BrokenLinks extends Plugin {
                 await leaf.view.updateView();
             }
         });
+    }
+
+    async runSettingsVersionCheck() {
+        // Check previous version
+        if (!valid(this.settings.version)) this.settings.version = "0.0.0";
+        if (lt(this.settings.version, this.manifest.version)) {
+            // Changes to settings in 1.2.0
+            if (lt(this.settings.version, "1.2.0", true)) {
+                switch (this.settings.groupBy as unknown as string) {
+                    case "folder":
+                    default:
+                        this.settings.groupBy = LinkGrouping.ByFolder;
+                        break;
+                    case "file":
+                        this.settings.groupBy = LinkGrouping.ByFile;
+                        break;
+                    case "link":
+                        this.settings.groupBy = LinkGrouping.ByLink;
+                        break;
+                }
+                switch (this.settings.folderSort as unknown as string) {
+                    case "nameAsc":
+                    default:
+                        this.settings.folderSort = FolderSort.NameAsc;
+                        break;
+                    case "nameDesc":
+                        this.settings.folderSort = FolderSort.NameDesc;
+                        break;
+                }
+                switch (this.settings.fileSort as unknown as string) {
+                    case "nameAsc":
+                        this.settings.fileSort = FileSort.NameAsc;
+                        break;
+                    case "nameDesc":
+                        this.settings.fileSort = FileSort.NameDesc;
+                        break;
+                    case "countAsc":
+                        this.settings.fileSort = FileSort.CountAsc;
+                        break;
+                    case "countDesc":
+                    default:
+                        this.settings.fileSort = FileSort.CountDesc;
+                        break;
+                }
+                switch (this.settings.linkSort as unknown as string) {
+                    case "nameAsc":
+                        this.settings.linkSort = LinkSort.NameAsc;
+                        break;
+                    case "nameDesc":
+                        this.settings.linkSort = LinkSort.NameDesc;
+                        break;
+                    case "countAsc":
+                        this.settings.linkSort = LinkSort.CountAsc;
+                        break;
+                    case "countDesc":
+                    default:
+                        this.settings.linkSort = LinkSort.CountDesc;
+                        break;
+                }
+            }
+            // Set version in settings to current version
+            this.settings.version = this.manifest.version;
+            // Save settings
+            await this.saveSettings();
+        }
     }
 }
