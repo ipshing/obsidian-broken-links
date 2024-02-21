@@ -35,6 +35,7 @@ export interface LinkModel {
     sortId: string;
     parent: FileModel;
     position: Pos;
+    key?: string;
 }
 
 export interface LinkFilter {

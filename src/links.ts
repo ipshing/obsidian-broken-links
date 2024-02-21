@@ -1,4 +1,4 @@
-import { getLinkpath, stripHeading } from "obsidian";
+import { EmbedCache, FrontmatterLinkCache, LinkCache, getLinkpath, stripHeading } from "obsidian";
 import BrokenLinks from "./main";
 import { BrokenLinksModel, FileModel, FolderModel, LinkFilter, LinkModel, LinkModelGroup } from "./models";
 import { FileSort, FolderSort, LinkSort } from "./enum";
@@ -29,133 +29,95 @@ export async function getBrokenLinks(plugin: BrokenLinks): Promise<BrokenLinksMo
 
         // Use the cache to get determine if there are links in the file
         const fileCache = plugin.app.metadataCache.getFileCache(file);
+        // Set up the FileModel now to be added to any broken links
+        const fileModel: FileModel = {
+            name: file.name,
+            path: file.path,
+            created: file.stat.ctime,
+            modified: file.stat.mtime,
+            links: [],
+        };
+
+        // Standard links
         if (fileCache?.links) {
-            // Set up the FileModel now to be added to any broken links
-            const fileModel: FileModel = {
-                name: file.name,
-                path: file.path,
-                created: file.stat.ctime,
-                modified: file.stat.mtime,
-                links: [],
-            };
-            // Iterate all links in the file
-            for (const link of fileCache.links) {
-                // Get link path
-                const linkPath = getLinkpath(link.link);
-                // Check if the link goes anywhere
-                const dest = plugin.app.metadataCache.getFirstLinkpathDest(linkPath, file.path);
-                // Default behavior is to mark link as broken if no destination is found
-                let destIsMissing = dest == null;
-                // If there is a destination file, check for missing blocks/headings
-                if (dest != null && link.link.contains("#")) {
-                    const targetCache = plugin.app.metadataCache.getFileCache(dest);
-                    if (link.link.contains("^") && targetCache?.blocks) {
-                        const block = link.link.slice(link.link.indexOf("^") + 1).toLocaleLowerCase();
-                        destIsMissing = targetCache.blocks[block] == undefined;
-                    } else if (targetCache?.headings) {
-                        const heading = link.link.slice(link.link.indexOf("#") + 1);
-                        destIsMissing =
-                            targetCache.headings.find((value) => {
-                                if (stripHeading(heading).toLocaleLowerCase() == stripHeading(value.heading).toLocaleLowerCase()) {
-                                    return value;
-                                }
-                                return undefined;
-                            }) == undefined;
-                    }
-                }
-                if (destIsMissing) {
-                    // Create model
-                    const linkModel: LinkModel = {
-                        id: link.link,
-                        sortId: link.link.replace(/^#?\^?/, ""),
-                        parent: fileModel,
-                        position: link.position,
-                    };
-                    if (!plugin.settings.consolidateLinks && link.displayText && link.displayText != link.link) {
-                        linkModel.sortId += `|${link.displayText}`;
-                    }
-                    // Add the link to the file
-                    fileModel.links.push(linkModel);
-                    // Add to byLink list
-                    let group = links.byLink.find((g) => g.id == linkModel.sortId);
-                    if (!group) {
-                        group = {
-                            id: linkModel.sortId,
-                            show: true,
-                            links: [],
-                        };
-                        links.byLink.push(group);
-                    }
-                    group.links.push(linkModel);
-                }
-            }
+            processLinks(fileCache.links, plugin, fileModel, links.byLink);
+        }
+        // Embedded links
+        if (fileCache?.embeds) {
+            // check embedded links
+            processLinks(fileCache.embeds, plugin, fileModel, links.byLink);
+        }
+        // Frontmatter links
+        if (fileCache?.frontmatterLinks) {
+            // check frontmatter links
+            processLinks(fileCache.frontmatterLinks, plugin, fileModel, links.byLink);
+        }
 
-            if (fileModel.links.length > 0) {
-                links.byFile.push(fileModel);
-                // Parse the path and build into the folder model
-                const pathParts = file.path.split("/");
-                if (pathParts.length > 0) {
-                    // Nest in folders collection
-                    let parentFolder: FolderModel | null = null;
-                    let folderPath = "";
-                    for (let i = 0; i < pathParts.length - 1; i++) {
-                        const folderName = pathParts[i];
-                        folderPath = folderPath.length == 0 ? folderName : `${folderPath}/${folderName}`;
-                        // If parentFolder is null, add it to the root,
-                        // otherwise nest it into the parentFolder
-                        if (parentFolder == null) {
-                            // Look for existing folder or create
-                            // a new one and set it as the parent
-                            parentFolder =
-                                links.byFolder.folders.find((f) => {
-                                    if (f.path == folderPath) return f;
-                                }) ?? null;
-                            if (parentFolder != null) {
-                                // Increment link count
-                                parentFolder.linkCount++;
-                            } else {
-                                // Add to root
-                                parentFolder = {
-                                    name: folderName,
-                                    path: folderPath,
-                                    folders: [],
-                                    files: [],
-                                    linkCount: 1, // default to 1
-                                };
-                                links.byFolder.folders.push(parentFolder);
-                            }
+        if (fileModel.links.length > 0) {
+            links.byFile.push(fileModel);
+            // Parse the path and build into the folder model
+            const pathParts = file.path.split("/");
+            if (pathParts.length > 0) {
+                // Nest in folders collection
+                let parentFolder: FolderModel | null = null;
+                let folderPath = "";
+                for (let i = 0; i < pathParts.length - 1; i++) {
+                    const folderName = pathParts[i];
+                    folderPath = folderPath.length == 0 ? folderName : `${folderPath}/${folderName}`;
+                    // If parentFolder is null, add it to the root,
+                    // otherwise nest it into the parentFolder
+                    if (parentFolder == null) {
+                        // Look for existing folder or create
+                        // a new one and set it as the parent
+                        parentFolder =
+                            links.byFolder.folders.find((f) => {
+                                if (f.path == folderPath) return f;
+                            }) ?? null;
+                        if (parentFolder != null) {
+                            // Increment link count
+                            parentFolder.linkCount++;
                         } else {
-                            // Look for existing child folder or create
-                            // a new one and add it to the parent
-                            let childFolder: FolderModel | null =
-                                parentFolder.folders.find((f) => {
-                                    if (f.path == folderPath) return f;
-                                }) ?? null;
-                            if (childFolder != null) {
-                                // Increment link count
-                                childFolder.linkCount++;
-                            } else {
-                                childFolder = {
-                                    name: folderName,
-                                    path: folderPath,
-                                    folders: [],
-                                    files: [],
-                                    linkCount: 1, // default to 1
-                                };
-                                parentFolder.folders.push(childFolder);
-                            }
-                            // Set the child folder as the parent and recurse
-                            parentFolder = childFolder;
+                            // Add to root
+                            parentFolder = {
+                                name: folderName,
+                                path: folderPath,
+                                folders: [],
+                                files: [],
+                                linkCount: 1, // default to 1
+                            };
+                            links.byFolder.folders.push(parentFolder);
                         }
-                    }
-
-                    // If there is a parent folder, put the file in there
-                    if (parentFolder != null) {
-                        parentFolder.files.push(fileModel);
                     } else {
-                        // Otherwise, file is in the root
-                        links.byFolder.files.push(fileModel);
+                        // Look for existing child folder or create
+                        // a new one and add it to the parent
+                        let childFolder: FolderModel | null =
+                            parentFolder.folders.find((f) => {
+                                if (f.path == folderPath) return f;
+                            }) ?? null;
+                        if (childFolder != null) {
+                            // Increment link count
+                            childFolder.linkCount++;
+                        } else {
+                            childFolder = {
+                                name: folderName,
+                                path: folderPath,
+                                folders: [],
+                                files: [],
+                                linkCount: 1, // default to 1
+                            };
+                            parentFolder.folders.push(childFolder);
+                        }
+                        // Set the child folder as the parent and recurse
+                        parentFolder = childFolder;
                     }
+                }
+
+                // If there is a parent folder, put the file in there
+                if (parentFolder != null) {
+                    parentFolder.files.push(fileModel);
+                } else {
+                    // Otherwise, file is in the root
+                    links.byFolder.files.push(fileModel);
                 }
             }
         }
@@ -170,6 +132,69 @@ export async function getBrokenLinks(plugin: BrokenLinks): Promise<BrokenLinksMo
     filterLinkTree(links.byLink, plugin.settings.linkFilter);
 
     return links;
+}
+
+function processLinks(links: LinkCache[] | EmbedCache[] | FrontmatterLinkCache[], plugin: BrokenLinks, fileModel: FileModel, linkModels: LinkModelGroup[]) {
+    for (const link of links) {
+        // Get link path
+        const linkPath = getLinkpath(link.link);
+        // Check if the link goes anywhere
+        const dest = plugin.app.metadataCache.getFirstLinkpathDest(linkPath, fileModel.path);
+        // Default behavior is to mark link as broken if no destination is found
+        let destIsMissing = dest == null;
+        // If there is a destination file, check for missing blocks/headings
+        if (dest != null && link.link.contains("#")) {
+            const targetCache = plugin.app.metadataCache.getFileCache(dest);
+            if (link.link.contains("^") && targetCache?.blocks) {
+                const block = link.link.slice(link.link.indexOf("^") + 1).toLocaleLowerCase();
+                destIsMissing = targetCache.blocks[block] == undefined;
+            } else if (targetCache?.headings) {
+                const heading = link.link.slice(link.link.indexOf("#") + 1);
+                destIsMissing =
+                    targetCache.headings.find((value) => {
+                        if (stripHeading(heading).toLocaleLowerCase() == stripHeading(value.heading).toLocaleLowerCase()) {
+                            return value;
+                        }
+                        return undefined;
+                    }) == undefined;
+            }
+        }
+        if (destIsMissing) {
+            // Create model
+            const linkModel: LinkModel = {
+                id: link.link,
+                sortId: link.link.replace(/^#?\^?/, ""),
+                parent: fileModel,
+                // Link may not have a position (in the case of a Frontmatter Link).
+                // Default to the top of the document (where frontmatter is anyway).
+                position: {
+                    start: { line: 0, col: 0, offset: 0 },
+                    end: { line: 0, col: 0, offset: 0 },
+                },
+            };
+            if ("position" in link) {
+                linkModel.position = link.position;
+            } else if ("key" in link) {
+                linkModel.key = link.key;
+            }
+            if (!plugin.settings.consolidateLinks && link.displayText && link.displayText != link.link) {
+                linkModel.sortId += `|${link.displayText}`;
+            }
+            // Add the link to the file
+            fileModel.links.push(linkModel);
+            // Add to byLink list
+            let group = linkModels.find((g) => g.id == linkModel.sortId);
+            if (!group) {
+                group = {
+                    id: linkModel.sortId,
+                    show: true,
+                    links: [],
+                };
+                linkModels.push(group);
+            }
+            group.links.push(linkModel);
+        }
+    }
 }
 
 export function sortFolderTree(folder: FolderModel, sort: FolderSort) {
