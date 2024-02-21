@@ -70,6 +70,7 @@ export class BrokenLinksView extends ItemView {
             item
                 .setTitle("Group by folder")
                 .setIcon("lucide-folder")
+                .setChecked(this.plugin.settings.groupBy == LinkGrouping.ByFolder)
                 .onClick(async () => {
                     if (this.plugin.settings.groupBy != LinkGrouping.ByFolder) {
                         this.plugin.settings.groupBy = LinkGrouping.ByFolder;
@@ -84,6 +85,7 @@ export class BrokenLinksView extends ItemView {
             item
                 .setTitle("Group by file")
                 .setIcon("lucide-file")
+                .setChecked(this.plugin.settings.groupBy == LinkGrouping.ByFile)
                 .onClick(async () => {
                     if (this.plugin.settings.groupBy != LinkGrouping.ByFile) {
                         this.plugin.settings.groupBy = LinkGrouping.ByFile;
@@ -98,6 +100,7 @@ export class BrokenLinksView extends ItemView {
             item
                 .setTitle("Group by link")
                 .setIcon("lucide-link")
+                .setChecked(this.plugin.settings.groupBy == LinkGrouping.ByLink)
                 .onClick(async () => {
                     if (this.plugin.settings.groupBy != LinkGrouping.ByLink) {
                         this.plugin.settings.groupBy = LinkGrouping.ByLink;
