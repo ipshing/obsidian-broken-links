@@ -7,6 +7,7 @@ import { lt, valid } from "semver";
 
 interface BrokenLinksSettings {
     version: string;
+    previousVersion: string;
     groupBy: LinkGrouping;
     expandButton: boolean;
     expandedFolderItems: string[];
@@ -22,6 +23,7 @@ interface BrokenLinksSettings {
 
 const DEFAULT_SETTINGS: BrokenLinksSettings = {
     version: "",
+    previousVersion: "",
     groupBy: LinkGrouping.ByFolder,
     expandButton: true,
     expandedFolderItems: [],
@@ -105,7 +107,7 @@ export default class BrokenLinks extends Plugin {
 
     async runSettingsVersionCheck() {
         // Check previous version
-        if (!valid(this.settings.version)) this.settings.version = "0.0.0";
+        if (!valid(this.settings.version)) this.settings.version = "1.0.0";
         if (lt(this.settings.version, this.manifest.version)) {
             // Changes to settings in 1.2.0
             if (lt(this.settings.version, "1.2.0")) {
@@ -161,9 +163,8 @@ export default class BrokenLinks extends Plugin {
                         break;
                 }
             }
-            // Set version in settings to current version
+            this.settings.previousVersion = this.settings.version;
             this.settings.version = this.manifest.version;
-            // Save settings
             await this.saveSettings();
         }
     }
