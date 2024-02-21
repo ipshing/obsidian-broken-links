@@ -2,6 +2,7 @@
     import { FileModel, LinkModel } from "src/models";
     import BrokenLinks from "src/main";
     import { afterUpdate } from "svelte";
+    import { LinkGrouping } from "src/enum";
 
     export let plugin: BrokenLinks;
     export let file: FileModel;
@@ -9,23 +10,24 @@
     export let fileExpanded: () => void;
 
     let isCollapsed: boolean =
-        plugin.settings.groupBy == "folder" ? !plugin.settings.expandedFolderItems.contains(file.path) : !plugin.settings.expandedFileItems.contains(file.path);
+        plugin.settings.groupBy == LinkGrouping.ByFolder ? !plugin.settings.expandedFolderItems.contains(file.path) : !plugin.settings.expandedFileItems.contains(file.path);
 
     afterUpdate(() => {
-        isCollapsed = plugin.settings.groupBy == "folder" ? !plugin.settings.expandedFolderItems.contains(file.path) : !plugin.settings.expandedFileItems.contains(file.path);
+        isCollapsed =
+            plugin.settings.groupBy == LinkGrouping.ByFolder ? !plugin.settings.expandedFolderItems.contains(file.path) : !plugin.settings.expandedFileItems.contains(file.path);
     });
     async function toggleExpand() {
         isCollapsed = !isCollapsed;
         if (isCollapsed) {
-            if (plugin.settings.groupBy == "folder") {
+            if (plugin.settings.groupBy == LinkGrouping.ByFolder) {
                 plugin.settings.expandedFolderItems.remove(file.path);
-            } else if (plugin.settings.groupBy == "file") {
+            } else if (plugin.settings.groupBy == LinkGrouping.ByFile) {
                 plugin.settings.expandedFileItems.remove(file.path);
             }
         } else {
-            if (plugin.settings.groupBy == "folder") {
+            if (plugin.settings.groupBy == LinkGrouping.ByFolder) {
                 plugin.settings.expandedFolderItems.push(file.path);
-            } else if (plugin.settings.groupBy == "file") {
+            } else if (plugin.settings.groupBy == LinkGrouping.ByFile) {
                 plugin.settings.expandedFileItems.push(file.path);
             }
             fileExpanded();
