@@ -17,61 +17,34 @@
     };
     export let groupByButtonClicked: (e: MouseEvent) => void;
     export let sortButtonClicked: (e: MouseEvent) => void;
-    export let updateLinkFilter: (filterString: string, matchCase: boolean) => void;
+    export let expandButtonClicked: (e: MouseEvent, el: HTMLElement) => void;
+    export let expandableItemClicked: (e: MouseEvent, el: HTMLElement) => void;
     export let folderContextClicked: (e: MouseEvent, el: HTMLElement) => void;
+    export let updateLinkFilter: (filterString: string, matchCase: boolean) => void;
     export let linkClicked: (e: MouseEvent, link: LinkModel) => void;
 
     let header: HTMLElement;
     let container: HTMLElement;
     let children: HTMLElement;
-    let expandLabel = plugin.settings.expandButton ? "Expand all" : "Collapse all";
-    let expandIcon = plugin.settings.expandButton ? "chevrons-up-down" : "chevrons-down-up";
+    let expandLabel = "Expand all";
+    let expandIcon = "chevrons-up-down";
 
     beforeUpdate(() => {
-        expandLabel = plugin.settings.expandButton ? "Expand all" : "Collapse all";
-        expandIcon = plugin.settings.expandButton ? "chevrons-up-down" : "chevrons-down-up";
+        let showExpand = true;
+        if (plugin.settings.groupBy == LinkGrouping.ByFolder) {
+            showExpand = plugin.settings.expandedFolderItems.length == 0;
+        } else if (plugin.settings.groupBy == LinkGrouping.ByFile) {
+            showExpand = plugin.settings.expandedFileItems.length == 0;
+        } else if (plugin.settings.groupBy == LinkGrouping.ByLink) {
+            showExpand = plugin.settings.expandedLinkItems.length == 0;
+        }
+        expandLabel = showExpand ? "Expand all" : "Collapse all";
+        expandIcon = showExpand ? "chevrons-up-down" : "chevrons-down-up";
     });
     afterUpdate(() => {
         // Set icons after DOM has been updated
         setIcons();
     });
-    async function toggleExpandButton() {
-        if (expandLabel === "Expand all") {
-            // Expand everything
-            if (plugin.settings.groupBy == LinkGrouping.ByFolder) {
-                children.querySelectorAll(".nav-folder, .nav-file").forEach((child) => {
-                    plugin.settings.expandedFolderItems.push(child.id);
-                });
-            } else if (plugin.settings.groupBy == LinkGrouping.ByFile) {
-                children.querySelectorAll(".nav-file").forEach((child) => {
-                    plugin.settings.expandedFileItems.push(child.id);
-                });
-            } else if (plugin.settings.groupBy == LinkGrouping.ByLink) {
-                children.querySelectorAll(".nav-link-group").forEach((child) => {
-                    plugin.settings.expandedLinkItems.push(child.id);
-                });
-            }
-            // Change to collapse
-            plugin.settings.expandButton = false;
-        } else {
-            // Collapse everything
-            if (plugin.settings.groupBy == LinkGrouping.ByFolder) {
-                plugin.settings.expandedFolderItems = [];
-            } else if (plugin.settings.groupBy == LinkGrouping.ByFile) {
-                plugin.settings.expandedFileItems = [];
-            } else if (plugin.settings.groupBy == LinkGrouping.ByLink) {
-                plugin.settings.expandedLinkItems = [];
-            }
-            // Change to expand
-            plugin.settings.expandButton = true;
-        }
-        await plugin.saveSettings();
-    }
-    async function childExpanded() {
-        // Change to collapse
-        plugin.settings.expandButton = false;
-        await plugin.saveSettings();
-    }
     function setIcons() {
         header.querySelectorAll(".clickable-icon").forEach((el) => setIcon(el as HTMLElement, el.getAttr("data-icon") ?? ""));
         container.querySelectorAll(".tree-item-icon").forEach((el) => setIcon(el as HTMLElement, el.getAttr("data-icon") ?? ""));
@@ -88,7 +61,7 @@
         <div class="clickable-icon nav-action-button" aria-label="Change sort order" data-icon="lucide-sort-asc" on:click={sortButtonClicked}></div>
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <!-- svelte-ignore a11y-no-static-element-interactions -->
-        <div class="clickable-icon nav-action-button" aria-label={expandLabel} data-icon={expandIcon} on:click={toggleExpandButton}></div>
+        <div class="clickable-icon nav-action-button" aria-label={expandLabel} data-icon={expandIcon} on:click={(e) => expandButtonClicked(e, children)}></div>
     </div>
     {#if groupBy == LinkGrouping.ByLink}
         <div class="filter-row">
@@ -131,20 +104,20 @@
         <div class="tree-item-children nav-folder-children" bind:this={children}>
             {#if groupBy == LinkGrouping.ByFolder}
                 {#each brokenLinks.byFolder.folders as folder}
-                    <Folder {plugin} {folder} {linkClicked} folderExpanded={childExpanded} fileExpanded={childExpanded} {folderContextClicked} />
+                    <Folder {plugin} {folder} {linkClicked} {expandableItemClicked} {folderContextClicked} />
                 {/each}
                 {#each brokenLinks.byFolder.files as file}
-                    <File {plugin} {file} {linkClicked} fileExpanded={childExpanded} />
+                    <File {plugin} {file} {expandableItemClicked} {linkClicked} />
                 {/each}
             {/if}
             {#if groupBy == LinkGrouping.ByFile}
                 {#each brokenLinks.byFile as file}
-                    <File {plugin} {file} {linkClicked} fileExpanded={childExpanded} />
+                    <File {plugin} {file} {expandableItemClicked} {linkClicked} />
                 {/each}
             {/if}
             {#if groupBy == LinkGrouping.ByLink}
                 {#each brokenLinks.byLink as linkGroup}
-                    <LinkGroup {plugin} {linkGroup} {linkClicked} linkExpanded={childExpanded} />
+                    <LinkGroup {plugin} {linkGroup} {expandableItemClicked} {linkClicked} />
                 {/each}
             {/if}
         </div>

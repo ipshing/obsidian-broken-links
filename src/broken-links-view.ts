@@ -1,6 +1,6 @@
 import { ItemView, Keymap, MarkdownPreviewView, MarkdownView, Menu, TFile, WorkspaceLeaf } from "obsidian";
 import BrokenLinks from "./main";
-import { BrokenLinksModel, FolderModel, LinkModel } from "./models";
+import { BrokenLinksModel, LinkModel } from "./models";
 import BrokenLinksTree from "./views/broken-links-tree.svelte";
 import { filterLinkTree, getBrokenLinks } from "./links";
 import { FileSort, FolderSort, LinkGrouping, LinkSort } from "./enum";
@@ -43,8 +43,10 @@ export class BrokenLinksView extends ItemView {
                 linkFilter: this.plugin.settings.linkFilter,
                 groupByButtonClicked: this.groupByButtonClickedHandler.bind(this),
                 sortButtonClicked: this.sortButtonClickedHandler.bind(this),
-                updateLinkFilter: this.updateLinkFilterHandler.bind(this),
+                expandButtonClicked: this.expandButtonClickedHandler.bind(this),
+                expandableItemClicked: this.expandableItemClickedHandler.bind(this),
                 folderContextClicked: this.folderContextClickedHandler.bind(this),
+                updateLinkFilter: this.updateLinkFilterHandler.bind(this),
                 linkClicked: this.linkClickedHandler.bind(this),
             },
         });
@@ -267,12 +269,62 @@ export class BrokenLinksView extends ItemView {
         }
     }
 
-    async updateLinkFilterHandler(filterString: string, matchCase: boolean) {
-        this.plugin.settings.linkFilter.filterString = filterString;
-        this.plugin.settings.linkFilter.matchCase = matchCase;
+    async expandButtonClickedHandler(e: MouseEvent, el: HTMLElement) {
+        if (this.plugin.settings.groupBy == LinkGrouping.ByFolder) {
+            if (this.plugin.settings.expandedFolderItems.length == 0) {
+                el.querySelectorAll(".nav-folder, .nav-file").forEach((child) => {
+                    this.plugin.settings.expandedFolderItems.push(child.id);
+                });
+            } else {
+                this.plugin.settings.expandedFolderItems = [];
+            }
+        } else if (this.plugin.settings.groupBy == LinkGrouping.ByFile) {
+            if (this.plugin.settings.expandedFileItems.length == 0) {
+                el.querySelectorAll(".nav-file").forEach((child) => {
+                    this.plugin.settings.expandedFileItems.push(child.id);
+                });
+            } else {
+                this.plugin.settings.expandedFileItems = [];
+            }
+        } else if (this.plugin.settings.groupBy == LinkGrouping.ByLink) {
+            if (this.plugin.settings.expandedLinkItems.length == 0) {
+                el.querySelectorAll(".nav-link-group").forEach((child) => {
+                    this.plugin.settings.expandedLinkItems.push(child.id);
+                });
+            } else {
+                this.plugin.settings.expandedLinkItems = [];
+            }
+        }
+        // Save settings
         await this.plugin.saveSettings();
-        filterLinkTree(this.brokenLinks.byLink, this.plugin.settings.linkFilter);
-        this.updateView(false);
+        // Update broken links tree
+        await this.updateView(false);
+    }
+
+    async expandableItemClickedHandler(e: MouseEvent, el: HTMLElement) {
+        if (this.plugin.settings.groupBy == LinkGrouping.ByFolder) {
+            if (this.plugin.settings.expandedFolderItems.contains(el.id)) {
+                this.plugin.settings.expandedFolderItems.remove(el.id);
+            } else {
+                this.plugin.settings.expandedFolderItems.push(el.id);
+            }
+        } else if (this.plugin.settings.groupBy == LinkGrouping.ByFile) {
+            if (this.plugin.settings.expandedFileItems.contains(el.id)) {
+                this.plugin.settings.expandedFileItems.remove(el.id);
+            } else {
+                this.plugin.settings.expandedFileItems.push(el.id);
+            }
+        } else if (this.plugin.settings.groupBy == LinkGrouping.ByLink) {
+            if (this.plugin.settings.expandedLinkItems.contains(el.id)) {
+                this.plugin.settings.expandedLinkItems.remove(el.id);
+            } else {
+                this.plugin.settings.expandedLinkItems.push(el.id);
+            }
+        }
+        // Save settings
+        await this.plugin.saveSettings();
+        // Update broken links tree
+        await this.updateView(false);
     }
 
     async folderContextClickedHandler(e: MouseEvent, el: HTMLElement) {
@@ -281,69 +333,43 @@ export class BrokenLinksView extends ItemView {
             item.setTitle("Expand all children")
                 .setIcon("chevrons-up-down")
                 .onClick(async () => {
-                    const folder = this.getFolderFromElement(el);
-                    if (folder) {
-                        // Expand folder and all children
-                        this.toggleExpand(folder, true);
-                        // Set expand button to collapse
-                        this.plugin.settings.expandButton = false;
-                        // Save settings
-                        await this.plugin.saveSettings();
-                        // Update broken links tree
-                        await this.updateView(false);
-                    }
+                    // Expand selected item
+                    this.plugin.settings.expandedFolderItems.push(el.id);
+                    // Expand children
+                    el.querySelectorAll(".nav-folder, .nav-file").forEach((child) => {
+                        this.plugin.settings.expandedFolderItems.push(child.id);
+                    });
+                    // Save settings
+                    await this.plugin.saveSettings();
+                    // Update broken links tree
+                    await this.updateView(false);
                 });
         });
         menu.addItem((item) => {
             item.setTitle("Collapse all children")
                 .setIcon("chevrons-down-up")
                 .onClick(async () => {
-                    const folder = this.getFolderFromElement(el);
-                    if (folder) {
-                        // Collapse folder and all children
-                        this.toggleExpand(folder, false);
-                        // Save settings
-                        await this.plugin.saveSettings();
-                        // Update broken links tree
-                        await this.updateView(false);
-                    }
+                    // Collapse selected item
+                    this.plugin.settings.expandedFolderItems.remove(el.id);
+                    // Collapse children
+                    el.querySelectorAll(".nav-folder, .nav-file").forEach((child) => {
+                        this.plugin.settings.expandedFolderItems.remove(child.id);
+                    });
+                    // Save settings
+                    await this.plugin.saveSettings();
+                    // Update broken links tree
+                    await this.updateView(false);
                 });
         });
         menu.showAtMouseEvent(e);
     }
 
-    getFolderFromElement(el: HTMLElement): FolderModel | undefined {
-        // Get folder path
-        const path = el.getAttr("data-path") ?? "";
-        // Split into parts
-        const parts = path.split("/");
-        // Dive into model until the bottom folder is found
-        let folder = this.brokenLinks.byFolder.folders.find((f) => f.name == parts[0]);
-        for (let i = 1; i < parts.length; i++) {
-            if (folder) {
-                folder = folder.folders.find((f) => f.name == parts[i]);
-            }
-        }
-        return folder;
-    }
-
-    toggleExpand(folder: FolderModel, expand: boolean) {
-        if (expand) {
-            this.plugin.settings.expandedFolderItems.push(folder.path);
-        } else {
-            this.plugin.settings.expandedFolderItems.remove(folder.path);
-        }
-        for (const file of folder.files) {
-            if (expand) {
-                this.plugin.settings.expandedFolderItems.push(file.path);
-            } else {
-                this.plugin.settings.expandedFolderItems.remove(file.path);
-            }
-        }
-        // Recurse for subfolders
-        for (const subfolder of folder.folders) {
-            this.toggleExpand(subfolder, expand);
-        }
+    async updateLinkFilterHandler(filterString: string, matchCase: boolean) {
+        this.plugin.settings.linkFilter.filterString = filterString;
+        this.plugin.settings.linkFilter.matchCase = matchCase;
+        await this.plugin.saveSettings();
+        filterLinkTree(this.brokenLinks.byLink, this.plugin.settings.linkFilter);
+        this.updateView(false);
     }
 
     async linkClickedHandler(e: MouseEvent, link: LinkModel) {

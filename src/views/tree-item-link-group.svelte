@@ -5,30 +5,21 @@
 
     export let plugin: BrokenLinks;
     export let linkGroup: LinkModelGroup;
+    export let expandableItemClicked: (e: MouseEvent, el: HTMLElement) => void;
     export let linkClicked: (e: MouseEvent, link: LinkModel) => void;
-    export let linkExpanded: () => void;
 
+    let el: HTMLElement;
     let isCollapsed: boolean = !plugin.settings.expandedLinkItems.contains(linkGroup.id);
 
     afterUpdate(() => {
         isCollapsed = !plugin.settings.expandedLinkItems.contains(linkGroup.id);
     });
-    async function toggleExpand() {
-        isCollapsed = !isCollapsed;
-        if (isCollapsed) {
-            plugin.settings.expandedLinkItems.remove(linkGroup.id);
-        } else {
-            plugin.settings.expandedLinkItems.push(linkGroup.id);
-            linkExpanded();
-        }
-        await plugin.saveSettings();
-    }
 </script>
 
-<div id={linkGroup.id} class="tree-item nav-link-group" class:hidden={!linkGroup.show}>
+<div id={linkGroup.id} bind:this={el} class="tree-item nav-link-group" class:hidden={!linkGroup.show}>
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <!-- svelte-ignore a11y-no-static-element-interactions -->
-    <div class="tree-item-self is-clickable nav-file-title" on:click={toggleExpand}>
+    <div class="tree-item-self is-clickable nav-file-title" on:click={(e) => expandableItemClicked(e, el)}>
         <div class="tree-item-icon collapse-icon nav-folder-collapse-indicator" class:is-collapsed={isCollapsed} data-icon="right-triangle"></div>
         <div class="tree-item-icon" data-icon="lucide-link"></div>
         <div class="tree-item-inner nav-file-title-content">{linkGroup.id}</div>

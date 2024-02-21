@@ -9,7 +9,6 @@ interface BrokenLinksSettings {
     version: string;
     previousVersion: string;
     groupBy: LinkGrouping;
-    expandButton: boolean;
     expandedFolderItems: string[];
     expandedFileItems: string[];
     expandedLinkItems: string[];
@@ -25,7 +24,6 @@ const DEFAULT_SETTINGS: BrokenLinksSettings = {
     version: "",
     previousVersion: "",
     groupBy: LinkGrouping.ByFolder,
-    expandButton: true,
     expandedFolderItems: [],
     expandedFileItems: [],
     expandedLinkItems: [],
