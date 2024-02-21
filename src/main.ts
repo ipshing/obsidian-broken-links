@@ -2,30 +2,33 @@ import { Plugin, WorkspaceLeaf } from "obsidian";
 import { BROKEN_LINKS_VIEW_TYPE, BrokenLinksView } from "./broken-links-view";
 import { BrokenLinksSettingsTab } from "./settings";
 import { LinkFilter } from "./models";
+import { FileSort, FolderSort, LinkGrouping, LinkSort } from "./enum";
 
 interface BrokenLinksSettings {
-    groupBy: "folder" | "file" | "link";
+    version: string;
+    groupBy: LinkGrouping;
     expandButton: boolean;
     expandedFolderItems: string[];
     expandedFileItems: string[];
     expandedLinkItems: string[];
-    folderSort: "nameAsc" | "nameDesc";
-    fileSort: "nameAsc" | "nameDesc" | "countAsc" | "countDesc";
-    linkSort: "nameAsc" | "nameDesc" | "countAsc" | "countDesc";
+    folderSort: FolderSort;
+    fileSort: FileSort;
+    linkSort: LinkSort;
     linkFilter: LinkFilter;
     ignoredFolders: string[];
     consolidateLinks: boolean;
 }
 
 const DEFAULT_SETTINGS: BrokenLinksSettings = {
-    groupBy: "folder",
+    version: "",
+    groupBy: LinkGrouping.ByFolder,
     expandButton: true,
     expandedFolderItems: [],
     expandedFileItems: [],
     expandedLinkItems: [],
-    folderSort: "nameAsc",
-    fileSort: "countDesc",
-    linkSort: "countDesc",
+    folderSort: FolderSort.NameAsc,
+    fileSort: FileSort.CountDesc,
+    linkSort: LinkSort.CountDesc,
     linkFilter: {
         filterString: "",
         matchCase: false,

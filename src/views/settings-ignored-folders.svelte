@@ -16,6 +16,8 @@
 <div class="broken-links-settings-folders" bind:this={list}>
     {#each ignoredFolders as folder}
         <div class="broken-links-settings-folder">
+            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <!-- svelte-ignore a11y-no-static-element-interactions -->
             <div class="clickable-icon" data-icon="lucide-x" aria-label="Remove folder" on:click={() => removeFolder(folder)}></div>
             <div class="broken-links-settings-folder-icon" data-icon="lucide-folder"></div>
             <div class="broken-links-settings-folder-title">{folder}</div>

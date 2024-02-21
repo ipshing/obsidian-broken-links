@@ -79,7 +79,7 @@ export class BrokenLinksSettingsTab extends PluginSettingTab {
             target: containerEl,
             props: {
                 ignoredFolders: this.plugin.settings.ignoredFolders,
-                removeFolder: async (folder) => {
+                removeFolder: async (folder: string) => {
                     this.plugin.settings.ignoredFolders.remove(folder);
                     // Save the settings
                     await this.plugin.saveSettings();

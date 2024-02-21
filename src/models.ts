@@ -1,5 +1,11 @@
 import { Pos } from "obsidian";
 
+export interface BrokenLinksModel {
+    byFolder: FolderModel;
+    byFile: FileModel[];
+    byLink: LinkModelGroup[];
+}
+
 export interface FolderModel {
     name: string;
     parent?: FolderModel;

@@ -1,7 +1,9 @@
-import { ItemView, Keymap, MarkdownPreviewView, MarkdownView, Menu, TFile, WorkspaceLeaf, getLinkpath, stripHeading } from "obsidian";
+import { ItemView, Keymap, MarkdownPreviewView, MarkdownView, Menu, TFile, WorkspaceLeaf } from "obsidian";
 import BrokenLinks from "./main";
 import { FileModel, FolderModel, LinkModel, LinkModelGroup } from "./models";
 import BrokenLinksTree from "./views/broken-links-tree.svelte";
+import { filterLinkTree, getBrokenLinks } from "./links";
+import { FileSort, FolderSort, LinkGrouping, LinkSort } from "./enum";
 
 export const BROKEN_LINKS_VIEW_TYPE = "broken-links-view";
 
@@ -30,7 +32,7 @@ export class BrokenLinksView extends ItemView {
     }
 
     async onOpen() {
-        this.brokenLinks = await this.getBrokenLinks();
+        this.brokenLinks = await getBrokenLinks(this.plugin);
 
         this.containerEl.empty();
 
@@ -62,298 +64,12 @@ export class BrokenLinksView extends ItemView {
     }
 
     async updateView(reloadLinks = true) {
-        if (reloadLinks) this.brokenLinks = await this.getBrokenLinks();
+        if (reloadLinks) this.brokenLinks = await getBrokenLinks(this.plugin);
         this.brokenLinksTree.$set({
             folderTree: this.brokenLinks.byFolder,
             fileTree: this.brokenLinks.byFile,
             linkTree: this.brokenLinks.byLink,
         });
-    }
-
-    async getBrokenLinks(): Promise<{
-        byFolder: FolderModel;
-        byFile: FileModel[];
-        byLink: LinkModelGroup[];
-    }> {
-        const byFolder: FolderModel = {
-            name: "root",
-            path: "/",
-            folders: [],
-            files: [],
-            linkCount: 0,
-        };
-        let byFile: FileModel[] = [];
-        let byLink: LinkModelGroup[] = [];
-
-        // Iterate all the files in the vault
-        for (const file of this.plugin.app.vault.getMarkdownFiles()) {
-            // Check ignored folder list
-            if (
-                this.plugin.settings.ignoredFolders.find((folder) => {
-                    return (file.parent && file.parent.path == "/" && folder == "/") || file.path.startsWith(folder + "/");
-                })
-            ) {
-                continue;
-            }
-
-            // Use the cache to get determine if there are links in the file
-            const fileCache = this.plugin.app.metadataCache.getFileCache(file);
-            if (fileCache?.links) {
-                // Set up the FileModel now to be added to any broken links
-                const fileModel: FileModel = {
-                    name: file.name,
-                    path: file.path,
-                    created: file.stat.ctime,
-                    modified: file.stat.mtime,
-                    links: [],
-                };
-                // Iterate all links in the file
-                for (const link of fileCache.links) {
-                    // Get link path
-                    const linkPath = getLinkpath(link.link);
-                    // Check if the link goes anywhere
-                    const dest = this.plugin.app.metadataCache.getFirstLinkpathDest(linkPath, file.path);
-                    // Default behavior is to mark link as broken if no destination is found
-                    let destIsMissing = dest == null;
-                    // If there is a destination file, check for missing blocks/headings
-                    if (dest != null && link.link.contains("#")) {
-                        const targetCache = this.plugin.app.metadataCache.getFileCache(dest);
-                        if (link.link.contains("^") && targetCache?.blocks) {
-                            const block = link.link.slice(link.link.indexOf("^") + 1).toLocaleLowerCase();
-                            destIsMissing = targetCache.blocks[block] == undefined;
-                        } else if (targetCache?.headings) {
-                            const heading = link.link.slice(link.link.indexOf("#") + 1);
-                            destIsMissing =
-                                targetCache.headings.find((value) => {
-                                    if (stripHeading(heading).toLocaleLowerCase() == stripHeading(value.heading).toLocaleLowerCase()) {
-                                        return value;
-                                    }
-                                    return undefined;
-                                }) == undefined;
-                        }
-                    }
-                    if (destIsMissing) {
-                        // Create model
-                        const linkModel: LinkModel = {
-                            id: link.link,
-                            sortId: link.link.replace(/^#?\^?/, ""),
-                            parent: fileModel,
-                            position: link.position,
-                        };
-                        if (!this.plugin.settings.consolidateLinks && link.displayText && link.displayText != link.link) {
-                            linkModel.sortId += `|${link.displayText}`;
-                        }
-                        // Add the link to the file
-                        fileModel.links.push(linkModel);
-                        // Add to byLink list
-                        let group = byLink.find((g) => g.id == linkModel.sortId);
-                        if (!group) {
-                            group = {
-                                id: linkModel.sortId,
-                                show: true,
-                                links: [],
-                            };
-                            byLink.push(group);
-                        }
-                        group.links.push(linkModel);
-                    }
-                }
-
-                if (fileModel.links.length > 0) {
-                    byFile.push(fileModel);
-                    // Parse the path and build into the folder model
-                    const pathParts = file.path.split("/");
-                    if (pathParts.length > 0) {
-                        // Nest in folders collection
-                        let parentFolder: FolderModel | null = null;
-                        let folderPath = "";
-                        for (let i = 0; i < pathParts.length - 1; i++) {
-                            const folderName = pathParts[i];
-                            folderPath = folderPath.length == 0 ? folderName : `${folderPath}/${folderName}`;
-                            // If parentFolder is null, add it to the root,
-                            // otherwise nest it into the parentFolder
-                            if (parentFolder == null) {
-                                // Look for existing folder or create
-                                // a new one and set it as the parent
-                                parentFolder =
-                                    byFolder.folders.find((f) => {
-                                        if (f.path == folderPath) return f;
-                                    }) ?? null;
-                                if (parentFolder != null) {
-                                    // Increment link count
-                                    parentFolder.linkCount++;
-                                } else {
-                                    // Add to root
-                                    parentFolder = {
-                                        name: folderName,
-                                        path: folderPath,
-                                        folders: [],
-                                        files: [],
-                                        linkCount: 1, // default to 1
-                                    };
-                                    byFolder.folders.push(parentFolder);
-                                }
-                            } else {
-                                // Look for existing child folder or create
-                                // a new one and add it to the parent
-                                let childFolder: FolderModel | null =
-                                    parentFolder.folders.find((f) => {
-                                        if (f.path == folderPath) return f;
-                                    }) ?? null;
-                                if (childFolder != null) {
-                                    // Increment link count
-                                    childFolder.linkCount++;
-                                } else {
-                                    childFolder = {
-                                        name: folderName,
-                                        path: folderPath,
-                                        folders: [],
-                                        files: [],
-                                        linkCount: 1, // default to 1
-                                    };
-                                    parentFolder.folders.push(childFolder);
-                                }
-                                // Set the child folder as the parent and recurse
-                                parentFolder = childFolder;
-                            }
-                        }
-
-                        // If there is a parent folder, put the file in there
-                        if (parentFolder != null) {
-                            parentFolder.files.push(fileModel);
-                        } else {
-                            // Otherwise, file is in the root
-                            byFolder.files.push(fileModel);
-                        }
-                    }
-                }
-            }
-        }
-
-        // Sort folder tree
-        this.sortFolderTree(byFolder);
-        // Sort file tree
-        byFile = this.sortFileTree(byFile);
-        // Sort link tree & filter
-        byLink = this.sortLinkTree(byLink);
-        this.filterLinkTree(byLink);
-
-        return {
-            byFolder,
-            byFile,
-            byLink,
-        };
-    }
-
-    sortFolderTree(folder: FolderModel) {
-        // Sort folders A to Z
-        folder.folders = folder.folders.sort((a, b) => {
-            if (a.name.toLocaleLowerCase() < b.name.toLocaleLowerCase()) return -1;
-            else if (a.name.toLocaleLowerCase() > b.name.toLocaleLowerCase()) return 1;
-            else return 0;
-        });
-        // Sort files according to settings
-        folder.files = folder.files.sort((a, b) => {
-            let place = 0;
-            if (a.name.toLocaleLowerCase() < b.name.toLocaleLowerCase()) place = -1;
-            else if (a.name.toLocaleLowerCase() > b.name.toLocaleLowerCase()) place = 1;
-            if (this.plugin.settings.folderSort == "nameDesc") place *= -1;
-            return place;
-        });
-        // Sort links by position
-        folder.files.forEach((file) => {
-            file.links = file.links.sort((a, b) => {
-                if (a.position.start.offset < b.position.start.offset) return -1;
-                else if (a.position.start.offset > b.position.start.offset) return 1;
-                else return 0;
-            });
-        });
-
-        // Recurse through subfolders
-        folder.folders.forEach((subfolder) => {
-            this.sortFolderTree(subfolder);
-        });
-    }
-
-    sortFileTree(files: FileModel[]): FileModel[] {
-        // Sort files according to settings
-        const sorted = files.sort((a, b) => {
-            let place = 0;
-            if (this.plugin.settings.fileSort.startsWith("name")) {
-                if (a.name.toLocaleLowerCase() < b.name.toLocaleLowerCase()) place = -1;
-                else if (a.name.toLocaleLowerCase() > b.name.toLocaleLowerCase()) place = 1;
-                if (this.plugin.settings.fileSort == "nameDesc") place *= -1;
-            } else if (this.plugin.settings.fileSort.startsWith("count")) {
-                if (a.links.length < b.links.length) place = -1;
-                else if (a.links.length > b.links.length) place = 1;
-                if (this.plugin.settings.fileSort == "countDesc") place *= -1;
-                // For same link count, default to A to Z
-                if (a.links.length == b.links.length) {
-                    if (a.name.toLocaleLowerCase() < b.name.toLocaleLowerCase()) place = -1;
-                    else if (a.name.toLocaleLowerCase() > b.name.toLocaleLowerCase()) place = 1;
-                }
-            }
-            return place;
-        });
-        // Sort links by position
-        sorted.forEach((file) => {
-            file.links = file.links.sort((a, b) => {
-                if (a.position.start.offset < b.position.start.offset) return -1;
-                else if (a.position.start.offset > b.position.start.offset) return 1;
-                else return 0;
-            });
-        });
-        return sorted;
-    }
-
-    sortLinkTree(linkGroups: LinkModelGroup[]): LinkModelGroup[] {
-        // Sort links according to settings
-        const sorted = linkGroups.sort((a, b) => {
-            let place = 0;
-            if (this.plugin.settings.linkSort.startsWith("name")) {
-                if (a.id.toLocaleLowerCase() < b.id.toLocaleLowerCase()) place = -1;
-                else if (a.id.toLocaleLowerCase() > b.id.toLocaleLowerCase()) place = 1;
-                if (this.plugin.settings.linkSort == "nameDesc") place *= -1;
-            } else if (this.plugin.settings.linkSort.startsWith("count")) {
-                if (a.links.length < b.links.length) place = -1;
-                else if (a.links.length > b.links.length) place = 1;
-                if (this.plugin.settings.linkSort == "countDesc") place *= -1;
-                // For same link count, default to A to Z
-                if (a.links.length == b.links.length) {
-                    if (a.id.toLocaleLowerCase() < b.id.toLocaleLowerCase()) place = -1;
-                    else if (a.id.toLocaleLowerCase() > b.id.toLocaleLowerCase()) place = 1;
-                }
-            }
-            return place;
-        });
-        // Sort files A to Z
-        for (let i = 0; i < sorted.length; i++) {
-            sorted[i].links = sorted[i].links.sort((a, b) => {
-                if (a.parent.name.toLocaleLowerCase() < b.parent.name.toLocaleLowerCase()) return -1;
-                if (a.parent.name.toLocaleLowerCase() > b.parent.name.toLocaleLowerCase()) return 1;
-                else return 0;
-            });
-        }
-        return sorted;
-    }
-
-    filterLinkTree(linkGroups: LinkModelGroup[]) {
-        for (const group of linkGroups) {
-            group.show = true;
-            // get the filter string as an array of each "word"
-            const words = this.plugin.settings.linkFilter.filterString.split(" ").filter((s) => s);
-            for (const word of words) {
-                if (this.plugin.settings.linkFilter.matchCase) {
-                    if (!group.id.contains(word)) {
-                        group.show = false;
-                    }
-                } else {
-                    if (!group.id.toLocaleLowerCase().contains(word.toLocaleLowerCase())) {
-                        group.show = false;
-                    }
-                }
-            }
-        }
     }
 
     groupByButtonClickedHandler(e: MouseEvent) {
@@ -363,10 +79,10 @@ export class BrokenLinksView extends ItemView {
                 .setTitle("Group by folder")
                 .setIcon("lucide-folder")
                 .onClick(async () => {
-                    if (this.plugin.settings.groupBy != "folder") {
-                        this.plugin.settings.groupBy = "folder";
+                    if (this.plugin.settings.groupBy != LinkGrouping.ByFolder) {
+                        this.plugin.settings.groupBy = LinkGrouping.ByFolder;
                         this.brokenLinksTree.$set({
-                            groupBy: "folder",
+                            groupBy: LinkGrouping.ByFolder,
                         });
                         await this.plugin.saveSettings();
                     }
@@ -377,10 +93,10 @@ export class BrokenLinksView extends ItemView {
                 .setTitle("Group by file")
                 .setIcon("lucide-file")
                 .onClick(async () => {
-                    if (this.plugin.settings.groupBy != "file") {
-                        this.plugin.settings.groupBy = "file";
+                    if (this.plugin.settings.groupBy != LinkGrouping.ByFile) {
+                        this.plugin.settings.groupBy = LinkGrouping.ByFile;
                         this.brokenLinksTree.$set({
-                            groupBy: "file",
+                            groupBy: LinkGrouping.ByFile,
                         });
                         await this.plugin.saveSettings();
                     }
@@ -391,10 +107,10 @@ export class BrokenLinksView extends ItemView {
                 .setTitle("Group by link")
                 .setIcon("lucide-link")
                 .onClick(async () => {
-                    if (this.plugin.settings.groupBy != "link") {
-                        this.plugin.settings.groupBy = "link";
+                    if (this.plugin.settings.groupBy != LinkGrouping.ByLink) {
+                        this.plugin.settings.groupBy = LinkGrouping.ByLink;
                         this.brokenLinksTree.$set({
-                            groupBy: "link",
+                            groupBy: LinkGrouping.ByLink,
                         });
                         await this.plugin.saveSettings();
                     }
@@ -405,15 +121,15 @@ export class BrokenLinksView extends ItemView {
 
     sortButtonClickedHandler(e: MouseEvent) {
         const menu = new Menu();
-        if (this.plugin.settings.groupBy == "folder") {
+        if (this.plugin.settings.groupBy == LinkGrouping.ByFolder) {
             menu.addItem((item) =>
                 item
                     .setTitle("File name (A to Z)")
-                    .setChecked(this.plugin.settings.folderSort == "nameAsc")
+                    .setChecked(this.plugin.settings.folderSort == FolderSort.NameAsc)
                     .onClick(async () => {
-                        if (this.plugin.settings.folderSort != "nameAsc") {
+                        if (this.plugin.settings.folderSort != FolderSort.NameAsc) {
                             // Update settings
-                            this.plugin.settings.folderSort = "nameAsc";
+                            this.plugin.settings.folderSort = FolderSort.NameAsc;
                             await this.plugin.saveSettings();
                             // Refresh links list
                             await this.updateView();
@@ -423,11 +139,11 @@ export class BrokenLinksView extends ItemView {
             menu.addItem((item) =>
                 item
                     .setTitle("File name (Z to A)")
-                    .setChecked(this.plugin.settings.folderSort == "nameDesc")
+                    .setChecked(this.plugin.settings.folderSort == FolderSort.NameDesc)
                     .onClick(async () => {
-                        if (this.plugin.settings.folderSort != "nameDesc") {
+                        if (this.plugin.settings.folderSort != FolderSort.NameDesc) {
                             // Update settings
-                            this.plugin.settings.folderSort = "nameDesc";
+                            this.plugin.settings.folderSort = FolderSort.NameDesc;
                             await this.plugin.saveSettings();
                             // Refresh links list
                             await this.updateView();
@@ -435,15 +151,15 @@ export class BrokenLinksView extends ItemView {
                     })
             );
             menu.showAtMouseEvent(e);
-        } else if (this.plugin.settings.groupBy == "file") {
+        } else if (this.plugin.settings.groupBy == LinkGrouping.ByFile) {
             menu.addItem((item) =>
                 item
                     .setTitle("File name (A to Z)")
-                    .setChecked(this.plugin.settings.fileSort == "nameAsc")
+                    .setChecked(this.plugin.settings.fileSort == FileSort.NameAsc)
                     .onClick(async () => {
-                        if (this.plugin.settings.fileSort != "nameAsc") {
+                        if (this.plugin.settings.fileSort != FileSort.NameAsc) {
                             // Update settings
-                            this.plugin.settings.fileSort = "nameAsc";
+                            this.plugin.settings.fileSort = FileSort.NameAsc;
                             await this.plugin.saveSettings();
                             // Refresh links list
                             await this.updateView();
@@ -453,11 +169,11 @@ export class BrokenLinksView extends ItemView {
             menu.addItem((item) =>
                 item
                     .setTitle("File name (Z to A)")
-                    .setChecked(this.plugin.settings.fileSort == "nameDesc")
+                    .setChecked(this.plugin.settings.fileSort == FileSort.NameDesc)
                     .onClick(async () => {
-                        if (this.plugin.settings.fileSort != "nameDesc") {
+                        if (this.plugin.settings.fileSort != FileSort.NameDesc) {
                             // Update settings
-                            this.plugin.settings.fileSort = "nameDesc";
+                            this.plugin.settings.fileSort = FileSort.NameDesc;
                             await this.plugin.saveSettings();
                             // Refresh links list
                             await this.updateView();
@@ -468,11 +184,11 @@ export class BrokenLinksView extends ItemView {
             menu.addItem((item) =>
                 item
                     .setTitle("Link count (fewest to most)")
-                    .setChecked(this.plugin.settings.fileSort == "countAsc")
+                    .setChecked(this.plugin.settings.fileSort == FileSort.CountAsc)
                     .onClick(async () => {
-                        if (this.plugin.settings.fileSort != "countAsc") {
+                        if (this.plugin.settings.fileSort != FileSort.CountAsc) {
                             // Update settings
-                            this.plugin.settings.fileSort = "countAsc";
+                            this.plugin.settings.fileSort = FileSort.CountAsc;
                             await this.plugin.saveSettings();
                             // Refresh links list
                             await this.updateView();
@@ -482,11 +198,11 @@ export class BrokenLinksView extends ItemView {
             menu.addItem((item) =>
                 item
                     .setTitle("Link count (most to fewest)")
-                    .setChecked(this.plugin.settings.fileSort == "countDesc")
+                    .setChecked(this.plugin.settings.fileSort == FileSort.CountDesc)
                     .onClick(async () => {
-                        if (this.plugin.settings.fileSort != "countDesc") {
+                        if (this.plugin.settings.fileSort != FileSort.CountDesc) {
                             // Update settings
-                            this.plugin.settings.fileSort = "countDesc";
+                            this.plugin.settings.fileSort = FileSort.CountDesc;
                             await this.plugin.saveSettings();
                             // Refresh links list
                             await this.updateView();
@@ -494,15 +210,15 @@ export class BrokenLinksView extends ItemView {
                     })
             );
             menu.showAtMouseEvent(e);
-        } else if (this.plugin.settings.groupBy == "link") {
+        } else if (this.plugin.settings.groupBy == LinkGrouping.ByLink) {
             menu.addItem((item) =>
                 item
                     .setTitle("File name (A to Z)")
-                    .setChecked(this.plugin.settings.linkSort == "nameAsc")
+                    .setChecked(this.plugin.settings.linkSort == LinkSort.NameAsc)
                     .onClick(async () => {
-                        if (this.plugin.settings.linkSort != "nameAsc") {
+                        if (this.plugin.settings.linkSort != LinkSort.NameAsc) {
                             // Update settings
-                            this.plugin.settings.linkSort = "nameAsc";
+                            this.plugin.settings.linkSort = LinkSort.NameAsc;
                             await this.plugin.saveSettings();
                             // Refresh links list
                             await this.updateView();
@@ -512,11 +228,11 @@ export class BrokenLinksView extends ItemView {
             menu.addItem((item) =>
                 item
                     .setTitle("File name (Z to A)")
-                    .setChecked(this.plugin.settings.linkSort == "nameDesc")
+                    .setChecked(this.plugin.settings.linkSort == LinkSort.NameDesc)
                     .onClick(async () => {
-                        if (this.plugin.settings.linkSort != "nameDesc") {
+                        if (this.plugin.settings.linkSort != LinkSort.NameDesc) {
                             // Update settings
-                            this.plugin.settings.linkSort = "nameDesc";
+                            this.plugin.settings.linkSort = LinkSort.NameDesc;
                             await this.plugin.saveSettings();
                             // Refresh links list
                             await this.updateView();
@@ -527,11 +243,11 @@ export class BrokenLinksView extends ItemView {
             menu.addItem((item) =>
                 item
                     .setTitle("Link count (fewest to most)")
-                    .setChecked(this.plugin.settings.linkSort == "countAsc")
+                    .setChecked(this.plugin.settings.linkSort == LinkSort.CountAsc)
                     .onClick(async () => {
-                        if (this.plugin.settings.linkSort != "countAsc") {
+                        if (this.plugin.settings.linkSort != LinkSort.CountAsc) {
                             // Update settings
-                            this.plugin.settings.linkSort = "countAsc";
+                            this.plugin.settings.linkSort = LinkSort.CountAsc;
                             await this.plugin.saveSettings();
                             // Refresh links list
                             await this.updateView();
@@ -541,11 +257,11 @@ export class BrokenLinksView extends ItemView {
             menu.addItem((item) =>
                 item
                     .setTitle("Link count (most to fewest)")
-                    .setChecked(this.plugin.settings.linkSort == "countDesc")
+                    .setChecked(this.plugin.settings.linkSort == LinkSort.CountDesc)
                     .onClick(async () => {
-                        if (this.plugin.settings.linkSort != "countDesc") {
+                        if (this.plugin.settings.linkSort != LinkSort.CountDesc) {
                             // Update settings
-                            this.plugin.settings.linkSort = "countDesc";
+                            this.plugin.settings.linkSort = LinkSort.CountDesc;
                             await this.plugin.saveSettings();
                             // Refresh links list
                             await this.updateView();
@@ -560,7 +276,7 @@ export class BrokenLinksView extends ItemView {
         this.plugin.settings.linkFilter.filterString = filterString;
         this.plugin.settings.linkFilter.matchCase = matchCase;
         await this.plugin.saveSettings();
-        this.filterLinkTree(this.brokenLinks.byLink);
+        filterLinkTree(this.brokenLinks.byLink, this.plugin.settings.linkFilter);
         this.updateView(false);
     }
 

@@ -6,9 +6,10 @@
     import File from "./tree-item-file.svelte";
     import LinkGroup from "./tree-item-link-group.svelte";
     import BrokenLinks from "src/main";
+    import { LinkGrouping } from "src/enum";
 
     export let plugin: BrokenLinks;
-    export let groupBy: "folder" | "file" | "link";
+    export let groupBy: LinkGrouping;
     export let folderTree: FolderModel;
     export let fileTree: FileModel[];
     export let linkTree: LinkModelGroup[];
@@ -39,15 +40,15 @@
     async function toggleExpandButton() {
         if (expandLabel === "Expand all") {
             // Expand everything
-            if (plugin.settings.groupBy == "folder") {
+            if (plugin.settings.groupBy == LinkGrouping.ByFolder) {
                 children.querySelectorAll(".nav-folder, .nav-file").forEach((child) => {
                     plugin.settings.expandedFolderItems.push(child.id);
                 });
-            } else if (plugin.settings.groupBy == "file") {
+            } else if (plugin.settings.groupBy == LinkGrouping.ByFile) {
                 children.querySelectorAll(".nav-file").forEach((child) => {
                     plugin.settings.expandedFileItems.push(child.id);
                 });
-            } else if (plugin.settings.groupBy == "link") {
+            } else if (plugin.settings.groupBy == LinkGrouping.ByLink) {
                 children.querySelectorAll(".nav-link-group").forEach((child) => {
                     plugin.settings.expandedLinkItems.push(child.id);
                 });
@@ -56,11 +57,11 @@
             plugin.settings.expandButton = false;
         } else {
             // Collapse everything
-            if (plugin.settings.groupBy == "folder") {
+            if (plugin.settings.groupBy == LinkGrouping.ByFolder) {
                 plugin.settings.expandedFolderItems = [];
-            } else if (plugin.settings.groupBy == "file") {
+            } else if (plugin.settings.groupBy == LinkGrouping.ByFile) {
                 plugin.settings.expandedFileItems = [];
-            } else if (plugin.settings.groupBy == "link") {
+            } else if (plugin.settings.groupBy == LinkGrouping.ByLink) {
                 plugin.settings.expandedLinkItems = [];
             }
             // Change to expand
@@ -91,7 +92,7 @@
         <!-- svelte-ignore a11y-no-static-element-interactions -->
         <div class="clickable-icon nav-action-button" aria-label={expandLabel} data-icon={expandIcon} on:click={toggleExpandButton}></div>
     </div>
-    {#if groupBy == "link"}
+    {#if groupBy == LinkGrouping.ByLink}
         <div class="filter-row">
             <div class="filter-input-container">
                 <input
@@ -130,7 +131,7 @@
 <div class="nav-files-container" bind:this={container}>
     <div class="tree-item nav-folder mod-root">
         <div class="tree-item-children nav-folder-children" bind:this={children}>
-            {#if groupBy == "folder"}
+            {#if groupBy == LinkGrouping.ByFolder}
                 {#each folderTree.folders as folder}
                     <Folder {plugin} {folder} {linkClicked} folderExpanded={childExpanded} fileExpanded={childExpanded} {folderContextClicked} />
                 {/each}
@@ -138,12 +139,12 @@
                     <File {plugin} {file} {linkClicked} fileExpanded={childExpanded} />
                 {/each}
             {/if}
-            {#if groupBy == "file"}
+            {#if groupBy == LinkGrouping.ByFile}
                 {#each fileTree as file}
                     <File {plugin} {file} {linkClicked} fileExpanded={childExpanded} />
                 {/each}
             {/if}
-            {#if groupBy == "link"}
+            {#if groupBy == LinkGrouping.ByLink}
                 {#each linkTree as group}
                     <LinkGroup {plugin} linkGroup={group} {linkClicked} linkExpanded={childExpanded} />
                 {/each}
