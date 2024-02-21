@@ -164,9 +164,9 @@ export async function getBrokenLinks(plugin: BrokenLinks): Promise<BrokenLinksMo
     // Sort folder tree
     sortFolderTree(links.byFolder, plugin.settings.folderSort);
     // Sort file tree
-    links.byFile = sortFileTree(links.byFile, plugin.settings.fileSort);
+    sortFileTree(links.byFile, plugin.settings.fileSort);
     // Sort link tree & filter
-    links.byLink = sortLinkTree(links.byLink, plugin.settings.linkSort);
+    sortLinkTree(links.byLink, plugin.settings.linkSort);
     filterLinkTree(links.byLink, plugin.settings.linkFilter);
 
     return links;
@@ -202,7 +202,7 @@ export function sortFolderTree(folder: FolderModel, sort: FolderSort) {
     });
 }
 
-export function sortFileTree(files: FileModel[], sort: FileSort): FileModel[] {
+export function sortFileTree(files: FileModel[], sort: FileSort) {
     // Sort files according to settings
     const sorted = files.sort((a, b) => {
         let place = 0;
@@ -230,10 +230,11 @@ export function sortFileTree(files: FileModel[], sort: FileSort): FileModel[] {
             else return 0;
         });
     });
-    return sorted;
+    // Assign back to files
+    files = sorted;
 }
 
-export function sortLinkTree(linkGroups: LinkModelGroup[], sort: LinkSort): LinkModelGroup[] {
+export function sortLinkTree(linkGroups: LinkModelGroup[], sort: LinkSort) {
     // Sort links according to settings
     const sorted = linkGroups.sort((a, b) => {
         let place = 0;
@@ -261,7 +262,8 @@ export function sortLinkTree(linkGroups: LinkModelGroup[], sort: LinkSort): Link
             else return 0;
         });
     }
-    return sorted;
+    // Assign back to linkGroups
+    linkGroups = sorted;
 }
 
 export function filterLinkTree(linkGroups: LinkModelGroup[], filter: LinkFilter) {
