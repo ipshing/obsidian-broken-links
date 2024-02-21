@@ -1,6 +1,6 @@
 import { ItemView, Keymap, MarkdownPreviewView, MarkdownView, Menu, TFile, WorkspaceLeaf } from "obsidian";
 import BrokenLinks from "./main";
-import { FileModel, FolderModel, LinkModel, LinkModelGroup } from "./models";
+import { BrokenLinksModel, FolderModel, LinkModel } from "./models";
 import BrokenLinksTree from "./views/broken-links-tree.svelte";
 import { filterLinkTree, getBrokenLinks } from "./links";
 import { FileSort, FolderSort, LinkGrouping, LinkSort } from "./enum";
@@ -9,11 +9,7 @@ export const BROKEN_LINKS_VIEW_TYPE = "broken-links-view";
 
 export class BrokenLinksView extends ItemView {
     plugin: BrokenLinks;
-    brokenLinks: {
-        byFolder: FolderModel;
-        byFile: FileModel[];
-        byLink: LinkModelGroup[];
-    };
+    brokenLinks: BrokenLinksModel;
     brokenLinksTree: BrokenLinksTree;
 
     constructor(leaf: WorkspaceLeaf, plugin: BrokenLinks) {
@@ -42,10 +38,8 @@ export class BrokenLinksView extends ItemView {
             target: this.containerEl,
             props: {
                 plugin: this.plugin,
+                brokenLinks: this.brokenLinks,
                 groupBy: this.plugin.settings.groupBy,
-                folderTree: this.brokenLinks.byFolder,
-                fileTree: this.brokenLinks.byFile,
-                linkTree: this.brokenLinks.byLink,
                 linkFilter: this.plugin.settings.linkFilter,
                 groupByButtonClicked: this.groupByButtonClickedHandler.bind(this),
                 sortButtonClicked: this.sortButtonClickedHandler.bind(this),
@@ -66,9 +60,7 @@ export class BrokenLinksView extends ItemView {
     async updateView(reloadLinks = true) {
         if (reloadLinks) this.brokenLinks = await getBrokenLinks(this.plugin);
         this.brokenLinksTree.$set({
-            folderTree: this.brokenLinks.byFolder,
-            fileTree: this.brokenLinks.byFile,
-            linkTree: this.brokenLinks.byLink,
+            brokenLinks: this.brokenLinks,
         });
     }
 

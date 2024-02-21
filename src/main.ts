@@ -108,7 +108,7 @@ export default class BrokenLinks extends Plugin {
         if (!valid(this.settings.version)) this.settings.version = "0.0.0";
         if (lt(this.settings.version, this.manifest.version)) {
             // Changes to settings in 1.2.0
-            if (lt(this.settings.version, "1.2.0", true)) {
+            if (lt(this.settings.version, "1.2.0")) {
                 switch (this.settings.groupBy as unknown as string) {
                     case "folder":
                     default:

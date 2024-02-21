@@ -1,6 +1,6 @@
 <script lang="ts">
     import { setIcon } from "obsidian";
-    import { FileModel, FolderModel, LinkFilter, LinkModel, LinkModelGroup } from "src/models";
+    import { BrokenLinksModel, LinkFilter, LinkModel } from "src/models";
     import { afterUpdate, beforeUpdate } from "svelte";
     import Folder from "./tree-item-folder.svelte";
     import File from "./tree-item-file.svelte";
@@ -9,10 +9,8 @@
     import { LinkGrouping } from "src/enum";
 
     export let plugin: BrokenLinks;
+    export let brokenLinks: BrokenLinksModel;
     export let groupBy: LinkGrouping;
-    export let folderTree: FolderModel;
-    export let fileTree: FileModel[];
-    export let linkTree: LinkModelGroup[];
     export let linkFilter: LinkFilter = {
         filterString: "",
         matchCase: false,
@@ -132,21 +130,21 @@
     <div class="tree-item nav-folder mod-root">
         <div class="tree-item-children nav-folder-children" bind:this={children}>
             {#if groupBy == LinkGrouping.ByFolder}
-                {#each folderTree.folders as folder}
+                {#each brokenLinks.byFolder.folders as folder}
                     <Folder {plugin} {folder} {linkClicked} folderExpanded={childExpanded} fileExpanded={childExpanded} {folderContextClicked} />
                 {/each}
-                {#each folderTree.files as file}
+                {#each brokenLinks.byFolder.files as file}
                     <File {plugin} {file} {linkClicked} fileExpanded={childExpanded} />
                 {/each}
             {/if}
             {#if groupBy == LinkGrouping.ByFile}
-                {#each fileTree as file}
+                {#each brokenLinks.byFile as file}
                     <File {plugin} {file} {linkClicked} fileExpanded={childExpanded} />
                 {/each}
             {/if}
             {#if groupBy == LinkGrouping.ByLink}
-                {#each linkTree as group}
-                    <LinkGroup {plugin} linkGroup={group} {linkClicked} linkExpanded={childExpanded} />
+                {#each brokenLinks.byLink as linkGroup}
+                    <LinkGroup {plugin} {linkGroup} {linkClicked} linkExpanded={childExpanded} />
                 {/each}
             {/if}
         </div>

@@ -1,22 +1,20 @@
 import { getLinkpath, stripHeading } from "obsidian";
 import BrokenLinks from "./main";
-import { FileModel, FolderModel, LinkFilter, LinkModel, LinkModelGroup } from "./models";
+import { BrokenLinksModel, FileModel, FolderModel, LinkFilter, LinkModel, LinkModelGroup } from "./models";
 import { FileSort, FolderSort, LinkSort } from "./enum";
 
-export async function getBrokenLinks(plugin: BrokenLinks): Promise<{
-    byFolder: FolderModel;
-    byFile: FileModel[];
-    byLink: LinkModelGroup[];
-}> {
-    const byFolder: FolderModel = {
-        name: "root",
-        path: "/",
-        folders: [],
-        files: [],
-        linkCount: 0,
+export async function getBrokenLinks(plugin: BrokenLinks): Promise<BrokenLinksModel> {
+    const links: BrokenLinksModel = {
+        byFolder: {
+            name: "root",
+            path: "/",
+            folders: [],
+            files: [],
+            linkCount: 0,
+        },
+        byFile: [],
+        byLink: [],
     };
-    let byFile: FileModel[] = [];
-    let byLink: LinkModelGroup[] = [];
 
     // Iterate all the files in the vault
     for (const file of plugin.app.vault.getMarkdownFiles()) {
@@ -79,21 +77,21 @@ export async function getBrokenLinks(plugin: BrokenLinks): Promise<{
                     // Add the link to the file
                     fileModel.links.push(linkModel);
                     // Add to byLink list
-                    let group = byLink.find((g) => g.id == linkModel.sortId);
+                    let group = links.byLink.find((g) => g.id == linkModel.sortId);
                     if (!group) {
                         group = {
                             id: linkModel.sortId,
                             show: true,
                             links: [],
                         };
-                        byLink.push(group);
+                        links.byLink.push(group);
                     }
                     group.links.push(linkModel);
                 }
             }
 
             if (fileModel.links.length > 0) {
-                byFile.push(fileModel);
+                links.byFile.push(fileModel);
                 // Parse the path and build into the folder model
                 const pathParts = file.path.split("/");
                 if (pathParts.length > 0) {
@@ -109,7 +107,7 @@ export async function getBrokenLinks(plugin: BrokenLinks): Promise<{
                             // Look for existing folder or create
                             // a new one and set it as the parent
                             parentFolder =
-                                byFolder.folders.find((f) => {
+                                links.byFolder.folders.find((f) => {
                                     if (f.path == folderPath) return f;
                                 }) ?? null;
                             if (parentFolder != null) {
@@ -124,7 +122,7 @@ export async function getBrokenLinks(plugin: BrokenLinks): Promise<{
                                     files: [],
                                     linkCount: 1, // default to 1
                                 };
-                                byFolder.folders.push(parentFolder);
+                                links.byFolder.folders.push(parentFolder);
                             }
                         } else {
                             // Look for existing child folder or create
@@ -156,7 +154,7 @@ export async function getBrokenLinks(plugin: BrokenLinks): Promise<{
                         parentFolder.files.push(fileModel);
                     } else {
                         // Otherwise, file is in the root
-                        byFolder.files.push(fileModel);
+                        links.byFolder.files.push(fileModel);
                     }
                 }
             }
@@ -164,18 +162,14 @@ export async function getBrokenLinks(plugin: BrokenLinks): Promise<{
     }
 
     // Sort folder tree
-    sortFolderTree(byFolder, plugin.settings.folderSort);
+    sortFolderTree(links.byFolder, plugin.settings.folderSort);
     // Sort file tree
-    byFile = sortFileTree(byFile, plugin.settings.fileSort);
+    links.byFile = sortFileTree(links.byFile, plugin.settings.fileSort);
     // Sort link tree & filter
-    byLink = sortLinkTree(byLink, plugin.settings.linkSort);
-    filterLinkTree(byLink, plugin.settings.linkFilter);
+    links.byLink = sortLinkTree(links.byLink, plugin.settings.linkSort);
+    filterLinkTree(links.byLink, plugin.settings.linkFilter);
 
-    return {
-        byFolder,
-        byFile,
-        byLink,
-    };
+    return links;
 }
 
 export function sortFolderTree(folder: FolderModel, sort: FolderSort) {
