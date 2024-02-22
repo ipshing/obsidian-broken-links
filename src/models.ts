@@ -34,6 +34,7 @@ export interface LinkModel {
     id: string;
     sortId: string;
     parent: FileModel;
+    fullText: string;
     position: Pos;
     key?: string;
 }

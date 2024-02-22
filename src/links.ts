@@ -165,6 +165,7 @@ function processLinks(links: LinkCache[] | EmbedCache[] | FrontmatterLinkCache[]
                 id: link.link,
                 sortId: link.link.replace(/^#?\^?/, ""),
                 parent: fileModel,
+                fullText: link.original,
                 // Link may not have a position (in the case of a Frontmatter Link).
                 // Default to the top of the document (where frontmatter is anyway).
                 position: {

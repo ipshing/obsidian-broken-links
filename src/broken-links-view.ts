@@ -390,23 +390,29 @@ export class BrokenLinksView extends ItemView {
                             });
                         });
                     } else {
-                        leaf.view.editor.setSelection(
-                            {
-                                line: link.position.start.line,
-                                ch: link.position.start.col,
-                            },
-                            {
-                                line: link.position.end.line,
-                                ch: link.position.end.col,
-                            }
-                        );
-                        leaf.view.editor.scrollIntoView(
-                            {
-                                from: { line: link.position.start.line, ch: link.position.start.col },
-                                to: { line: link.position.end.line, ch: link.position.end.col },
-                            },
-                            true
-                        );
+                        // Exclude frontmatter links for now
+                        if (!link.key) {
+                            // Update start/end col to highlight only the link text
+                            const colStart = link.position.start.col + link.fullText.indexOf(link.id);
+                            const colEnd = colStart + link.id.length;
+                            leaf.view.editor.setSelection(
+                                {
+                                    line: link.position.start.line,
+                                    ch: colStart,
+                                },
+                                {
+                                    line: link.position.end.line,
+                                    ch: colEnd,
+                                }
+                            );
+                            leaf.view.editor.scrollIntoView(
+                                {
+                                    from: { line: link.position.start.line, ch: link.position.start.col },
+                                    to: { line: link.position.end.line, ch: link.position.end.col },
+                                },
+                                true
+                            );
+                        }
                     }
                 }
             }
