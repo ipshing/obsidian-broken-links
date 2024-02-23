@@ -37,6 +37,9 @@
             showExpand = plugin.settings.expandedFileItems.length == 0;
         } else if (plugin.settings.groupBy == LinkGrouping.ByLink) {
             showExpand = plugin.settings.expandedLinkItems.length == 0;
+            if (plugin.settings.linkFilter.filterString.length > 0) {
+                showExpand = brokenLinks.byLink.filter((value) => value.show && plugin.settings.expandedLinkItems.contains(value.id)).length == 0;
+            }
         }
         expandLabel = showExpand ? "Expand all" : "Collapse all";
         expandIcon = showExpand ? "chevrons-up-down" : "chevrons-down-up";

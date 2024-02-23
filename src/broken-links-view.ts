@@ -287,12 +287,22 @@ export class BrokenLinksView extends ItemView {
                 this.plugin.settings.expandedFileItems = [];
             }
         } else if (this.plugin.settings.groupBy == LinkGrouping.ByLink) {
-            if (this.plugin.settings.expandedLinkItems.length == 0) {
-                el.querySelectorAll(".nav-link-group").forEach((child) => {
-                    this.plugin.settings.expandedLinkItems.push(child.id);
-                });
+            if (this.plugin.settings.linkFilter.filterString.length > 0) {
+                const shown = this.brokenLinks.byLink.filter((link) => link.show);
+                const expand = shown.filter((link) => this.plugin.settings.expandedLinkItems.contains(link.id)).length == 0;
+                if (expand) {
+                    shown.forEach((link) => this.plugin.settings.expandedLinkItems.push(link.id));
+                } else {
+                    shown.forEach((link) => this.plugin.settings.expandedLinkItems.remove(link.id));
+                }
             } else {
-                this.plugin.settings.expandedLinkItems = [];
+                if (this.plugin.settings.expandedLinkItems.length == 0) {
+                    el.querySelectorAll(".nav-link-group").forEach((child) => {
+                        this.plugin.settings.expandedLinkItems.push(child.id);
+                    });
+                } else {
+                    this.plugin.settings.expandedLinkItems = [];
+                }
             }
         }
         // Save settings
