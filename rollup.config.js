@@ -5,6 +5,7 @@ import typescript from "@rollup/plugin-typescript";
 import copy from "rollup-plugin-copy";
 import svelte from "rollup-plugin-svelte";
 import autoPreprocess from "svelte-preprocess";
+import terser from "@rollup/plugin-terser";
 
 const isProd = process.env.BUILD === "production";
 
@@ -14,28 +15,56 @@ if you want to view the source visit the plugins github repository
 */
 `;
 
-export default {
-    input: "src/main.ts",
-    output: {
-        file: "build/main.js",
-        sourcemap: "inline",
-        sourcemapExcludeSources: isProd,
-        format: "cjs",
-        exports: "default",
-        banner,
+export default [
+    {
+        input: "src/main.ts",
+        output: {
+            file: "build/debug/main.js",
+            sourcemap: "inline",
+            sourcemapExcludeSources: isProd,
+            format: "cjs",
+            exports: "default",
+            banner,
+        },
+        external: ["obsidian"],
+        plugins: [
+            svelte({ emitCss: false, preprocess: autoPreprocess() }),
+            typescript(),
+            nodeResolve({ browser: true }),
+            commonjs(),
+            json(),
+            copy({
+                targets: [
+                    { src: "manifest.json", dest: "build/debug" },
+                    { src: "src/styles.css", dest: "build/debug" },
+                ],
+            }),
+        ],
     },
-    external: ["obsidian"],
-    plugins: [
-        svelte({ emitCss: false, preprocess: autoPreprocess() }),
-        typescript(),
-        nodeResolve({ browser: true }),
-        commonjs(),
-        json(),
-        copy({
-            targets: [
-                { src: "manifest.json", dest: "build" },
-                { src: "src/styles.css", dest: "build" },
-            ],
-        }),
-    ],
-};
+    {
+        input: "src/main.ts",
+        output: {
+            file: "build/release/main.js",
+            sourcemap: "inline",
+            sourcemapExcludeSources: isProd,
+            format: "cjs",
+            exports: "default",
+            banner,
+        },
+        external: ["obsidian"],
+        plugins: [
+            svelte({ emitCss: false, preprocess: autoPreprocess() }),
+            typescript(),
+            nodeResolve({ browser: true }),
+            commonjs(),
+            json(),
+            terser(),
+            copy({
+                targets: [
+                    { src: "manifest.json", dest: "build/release" },
+                    { src: "src/styles.css", dest: "build/release" },
+                ],
+            }),
+        ],
+    },
+];
