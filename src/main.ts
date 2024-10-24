@@ -1,4 +1,4 @@
-import { Plugin, WorkspaceLeaf } from "obsidian";
+import { Plugin, requireApiVersion } from "obsidian";
 import { BROKEN_LINKS_VIEW_TYPE, BrokenLinksView } from "./broken-links-view";
 import { BrokenLinksSettingsTab } from "./settings";
 import { LinkFilter } from "./models";
@@ -79,28 +79,31 @@ export default class BrokenLinks extends Plugin {
     async activateView() {
         const { workspace } = this.app;
 
-        let leaf: WorkspaceLeaf | null = null;
-        const leaves = workspace.getLeavesOfType(BROKEN_LINKS_VIEW_TYPE);
-        if (leaves.length > 0) {
-            // A leaf with the Broken Links view already exists, use that
-            leaf = leaves[0];
+        let leaf = workspace.getLeavesOfType(BROKEN_LINKS_VIEW_TYPE).first();
+        if (leaf && leaf.view instanceof BrokenLinksView) {
+            // A leaf with the Broken Links view already exists, show that
+            await workspace.revealLeaf(leaf);
         } else {
             // The view could not be found in the workspace,
             // create a new leaf in the right sidebar
-            leaf = workspace.getRightLeaf(false);
+            leaf = workspace.getRightLeaf(false) || undefined;
             if (leaf) await leaf.setViewState({ type: BROKEN_LINKS_VIEW_TYPE, active: true });
         }
-
-        // Show the leaf in case it is in a collapsed sidebar
-        if (leaf) workspace.revealLeaf(leaf);
     }
 
     async updateView() {
-        this.app.workspace.getLeavesOfType(BROKEN_LINKS_VIEW_TYPE).forEach(async (leaf) => {
+        const { workspace } = this.app;
+
+        const leaf = workspace.getLeavesOfType(BROKEN_LINKS_VIEW_TYPE).first();
+        if (leaf) {
+            if (requireApiVersion("1.7.2")) {
+                // Ensure view is fully loaded
+                await leaf.loadIfDeferred();
+            }
             if (leaf.view instanceof BrokenLinksView) {
                 await leaf.view.updateView();
             }
-        });
+        }
     }
 
     async runSettingsVersionCheck() {
