@@ -1,0 +1,23 @@
+/**
+    These styles override ones set by the Folder Notes plugin
+    (https://github.com/LostPaul/obsidian-folder-notes)
+    At this time (2024-10-24), the plugin makes heavy use of
+    the '!important' property and applies it to Obsidian as
+    a whole instead of just the core file explorer plugin.
+ */
+.fn-whitespace-stop-collapsing .broken-links-view .nav-folder-title-content {
+    flex-grow: 1 !important;
+    display: inline-block;
+    padding-bottom: 0 !important;
+    padding-top: 0 !important;
+}
+.version-1-7-2.fn-whitespace-stop-collapsing .broken-links-view .nav-files-container .collapse-icon {
+    padding-top: 0 !important;
+}
+.fn-whitespace-stop-collapsing .broken-links-view .nav-folder-title,
+body:not(.mod-rtl).fn-whitespace-stop-collapsing .broken-links-view .nav-folder-title {
+    padding: var(--nav-item-parent-padding) !important;
+}
+.fn-whitespace-stop-collapsing .broken-links-view .nav-folder-collapse-indicator {
+    margin-top: 0px !important;
+}
