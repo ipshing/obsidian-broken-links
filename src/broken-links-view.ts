@@ -32,7 +32,7 @@ export class BrokenLinksView extends ItemView {
 
         this.containerEl.empty();
 
-        this.containerEl.addClass("broken-links");
+        this.containerEl.addClass("broken-links-view");
 
         this.brokenLinksTree = new BrokenLinksTree({
             target: this.containerEl,
