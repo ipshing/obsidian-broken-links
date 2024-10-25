@@ -23,7 +23,12 @@ If you don't have many files with broken links this view can eliminate a level o
 This view collates all brokn links by the link name, showing which files they appear in. They can be sorted by name or by occurrences.
 
 ![link view](https://github.com/ipshing/obsidian-broken-links/blob/main/resources/screenshots/link-view.png)
-___
+
+## CSS Overrides
+
+The styles used in this plugin mirror the core file explorer look-and-feel. Some plugins make alterations to the core file explorer that affect the layout of the Broken Links view. If you encounter such issues, please copy the [snippet](https://github.com/ipshing/obsidian-broken-links/blob/main/resources/css/broken-links-css-overrides.css) in the _resources_ folder into your vault. If you find plugin styles that are not addressed in the snippet, feel free to open an issue or a PR.
+
+---
 
 ## Donations
 
